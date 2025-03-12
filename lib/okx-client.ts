@@ -57,29 +57,62 @@ export class OKXApiClient {
 
         // Convert to requested currency if not USD
         if (currency.toUpperCase() !== 'USD') {
-          // Fetch conversion rate from OKX
-          const conversionPath = '/market/ticker';
-          const conversionSymbol = `${currency.toUpperCase()}-USDT`;
-          const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
+          // Valutaparen mapping voor OKX
+          const currencyPairs: Record<string, string> = {
+            EUR: 'EUR-USDT',
+            GBP: 'GBP-USDT',
+            JPY: 'JPY-USDT',
+            RUB: 'RUB-USDT'
+          };
 
-          const conversionResponse = await fetch(
-            `${this.baseUrl}${conversionPath}?instId=${conversionSymbol}`,
-            {
-              headers: {
-                'OK-ACCESS-KEY': this.config.apiKey,
-                'OK-ACCESS-SIGN': conversionSignature,
-                'OK-ACCESS-TIMESTAMP': timestamp,
-                'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-              },
-            }
-          );
+          // Fallback conversie rates als API faalt
+          const fallbackRates: Record<string, number> = {
+            EUR: 0.92,
+            GBP: 0.79,
+            JPY: 150,
+            RUB: 92
+          };
 
-          if (conversionResponse.ok) {
-            const conversionData = await conversionResponse.json();
-            if (conversionData?.data?.[0]) {
-              const rate = parseFloat(conversionData.data[0].last);
-              price = price * rate;
+          try {
+            // Fetch conversion rate from OKX
+            const conversionPath = '/market/ticker';
+            const conversionSymbol = currencyPairs[currency.toUpperCase()];
+            const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
+
+            const conversionResponse = await fetch(
+              `${this.baseUrl}${conversionPath}?instId=${conversionSymbol}`,
+              {
+                headers: {
+                  'OK-ACCESS-KEY': this.config.apiKey,
+                  'OK-ACCESS-SIGN': conversionSignature,
+                  'OK-ACCESS-TIMESTAMP': timestamp,
+                  'OK-ACCESS-PASSPHRASE': this.config.passphrase,
+                },
+              }
+            );
+
+            if (conversionResponse.ok) {
+              const conversionData = await conversionResponse.json();
+              if (conversionData?.data?.[0]) {
+                const rate = parseFloat(conversionData.data[0].last);
+                if (!isNaN(rate) && rate > 0) {
+                  price = price * rate;
+                } else {
+                  // Als de rate ongeldig is, gebruik fallback
+                  price = price * fallbackRates[currency.toUpperCase()];
+                }
+              } else {
+                // Als er geen data is, gebruik fallback
+                price = price * fallbackRates[currency.toUpperCase()];
+              }
+            } else {
+              // Als de API call faalt, gebruik fallback
+              price = price * fallbackRates[currency.toUpperCase()];
             }
+          } catch (error) {
+            console.error('Error fetching conversion rate:', error);
+            // Bij een error, gebruik fallback
+            price = price * fallbackRates[currency.toUpperCase()];
           }
         }
 

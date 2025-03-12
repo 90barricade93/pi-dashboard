@@ -14,6 +14,7 @@ Een moderne, performante en veilige dashboard applicatie gebouwd met Next.js 14,
 - 🌙 Dark/Light mode
 - ♿️ Toegankelijkheid (ARIA, keyboard navigation)
 - 🔒 Security best practices
+- 📈 Real-time prijsdata via OKX API
 
 ## 🛠️ Technische Stack
 
@@ -25,12 +26,27 @@ Een moderne, performante en veilige dashboard applicatie gebouwd met Next.js 14,
 - **Containerization:** Docker
 - **CI/CD:** GitHub Actions
 - **Code Quality:** ESLint & Prettier
+- **API Integration:** OKX API v5
 
 ## 📋 Vereisten
 
 - Node.js 20.x
 - npm 10.x
 - Docker (optioneel)
+- OKX API credentials
+
+## 🔑 Environment Variables
+
+Maak een `.env` bestand aan in de root van het project met de volgende variabelen:
+
+```env
+# OKX API Credentials
+OKX_API_KEY=jouw_api_key
+OKX_API_SECRET=jouw_api_secret
+OKX_PASSPHRASE=jouw_passphrase
+```
+
+Deze credentials kun je verkrijgen via je OKX account onder API Management.
 
 ## 🚀 Installatie
 
@@ -45,7 +61,11 @@ cd pi-dashboard
 npm install
 ```
 
-3. Start de development server:
+3. Configureer environment variables:
+- Kopieer `.env.example` naar `.env`
+- Vul je OKX API credentials in
+
+4. Start de development server:
 ```bash
 npm run dev
 ```
@@ -114,3 +134,16 @@ Dit project is gelicentieerd onder de MIT License - zie het [LICENSE](LICENSE) b
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Radix UI](https://www.radix-ui.com/)
 - [TypeScript](https://www.typescriptlang.org/)
+
+## 📈 API Integratie
+
+De applicatie gebruikt de OKX API v5 voor real-time prijsdata. De belangrijkste endpoints zijn:
+
+- `/market/ticker` - Voor real-time prijsinformatie
+- `/market/candles` - Voor historische prijsdata
+
+De API client is geconfigureerd met:
+- Automatische valuta conversie
+- Fallback prijzen bij API fouten
+- Rate limiting volgens OKX specificaties
+- Veilige authenticatie handling

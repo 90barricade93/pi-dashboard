@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCurrency, type Currency } from "@/contexts/currency-context"
+import { fetchPiPrice } from "@/lib/api-client"
 
 const currencySymbols: Record<Currency, string> = {
   EUR: "€",
@@ -23,7 +24,7 @@ export default function PriceTracker() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch Pi price from CoinGecko API
+  // Fetch Pi price from OKX API
   const getPiPrice = async () => {
     setLoading(true)
     setError(null)
@@ -34,31 +35,17 @@ export default function PriceTracker() {
     }
 
     try {
-      // CoinGecko API endpoint for Pi Network
-      // Note: Pi Network's ID on CoinGecko is "pi-network-iou"
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=pi-network-iou&vs_currencies=${currency.toLowerCase()}&include_24hr_change=true&x_cg_demo_api_key=${process.env.NEXT_PUBLIC_COINGECKO_API_KEY}`,
-      )
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`)
+      const result = await fetchPiPrice(currency)
+      
+      if (result.error) {
+        throw new Error(result.error)
       }
 
-      const data = await response.json()
-
-      // Check if we have data for Pi Network
-      if (data && data["pi-network-iou"]) {
-        const currencyKey = currency.toLowerCase()
-        const piData = data["pi-network-iou"]
-
-        if (piData[currencyKey]) {
-          setPrice(piData[currencyKey])
-          setLastUpdated(new Date())
-        } else {
-          throw new Error(`Price data not available for ${currency}`)
-        }
+      if (result.price !== null) {
+        setPrice(result.price)
+        setLastUpdated(new Date())
       } else {
-        throw new Error("Pi Network price data not found")
+        throw new Error("Price data not available")
       }
     } catch (error) {
       console.error("Error fetching Pi price:", error)
@@ -170,12 +157,12 @@ export default function PriceTracker() {
               <div className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center">
                 <span>Powered by</span>
                 <a
-                  href="https://www.coingecko.com"
+                  href="https://www.okx.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center ml-1 hover:text-foreground transition-colors"
                 >
-                  CoinGecko
+                  OKX
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

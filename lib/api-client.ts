@@ -17,23 +17,23 @@ const okxClient = new OKXApiClient();
  * Get the CoinGecko API key from environment variables
  * Falls back to demo key if not set (not recommended for production)
  */
-export const getCoinGeckoApiKey = (): string => {
-  const apiKey = process.env.NEXT_PUBLIC_COINGECKO_API_KEY
+// export const getCoinGeckoApiKey = (): string => {
+//   const apiKey = process.env.NEXT_PUBLIC_COINGECKO_API_KEY
 
-  if (!apiKey) {
-    // Only log this warning during development
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "NEXT_PUBLIC_COINGECKO_API_KEY environment variable is not set. Using fallback demo key. " +
-          "This is not recommended for production use.",
-      )
-    }
-    // Return a demo key (limited usage)
-    return "CG-mLgtcXJ3Sof8g5thnCCosstx"
-  }
+//   if (!apiKey) {
+//     // Only log this warning during development
+//     if (process.env.NODE_ENV === "development") {
+//       console.warn(
+//         "NEXT_PUBLIC_COINGECKO_API_KEY environment variable is not set. Using fallback demo key. " +
+//           "This is not recommended for production use.",
+//       )
+//     }
+//     // Return a demo key (limited usage)
+//     return "CG-mLgtcXJ3Sof8g5thnCCosstx"
+//   }
 
-  return apiKey
-}
+//   return apiKey
+// }
 
 /**
  * Fetch current Pi price from OKX

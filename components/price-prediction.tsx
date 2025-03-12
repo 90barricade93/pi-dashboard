@@ -755,15 +755,15 @@ export default function PricePrediction() {
               </ul>
             </div>
             {prediction && (
-              <div className="mt-4 pt-3 border-t text-xs text-center text-muted-foreground flex items-center justify-center">
+              <div className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center">
                 <span>Powered by</span>
                 <a
-                  href="https://www.coingecko.com"
+                  href="https://www.okx.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center ml-1 hover:text-foreground transition-colors"
                 >
-                  CoinGecko
+                  OKX
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

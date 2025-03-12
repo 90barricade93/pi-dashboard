@@ -6,12 +6,30 @@ let tweetCache: {
   timestamp: number
 } | null = null
 
-// Cache duration in milliseconds (15 minutes)
-const CACHE_DURATION = 15 * 60 * 1000
+// Cache duration in milliseconds (4 hours)
+const CACHE_DURATION = 4 * 60 * 60 * 1000
 
 // Rate limit status
 let isRateLimited = false
 let rateLimitResetTime = 0
+
+// Function to check if we should make a new API call
+function shouldFetchNewTweets() {
+  const now = new Date()
+  const lastFetchTime = tweetCache?.timestamp ? new Date(tweetCache.timestamp) : null
+  
+  // Als er geen cache is, dan moeten we fetchen
+  if (!lastFetchTime) return true
+  
+  // Bereken het volgende 4-uurs interval vanaf middernacht
+  const hours = now.getHours()
+  const nextFetchHour = Math.ceil(hours / 4) * 4
+  const nextFetchDate = new Date(now)
+  nextFetchDate.setHours(nextFetchHour, 0, 0, 0)
+  
+  // Als de huidige tijd voorbij het volgende fetch moment is, moeten we fetchen
+  return now.getTime() >= nextFetchDate.getTime()
+}
 
 export async function GET() {
   try {
@@ -42,9 +60,9 @@ export async function GET() {
       isRateLimited = false
     }
 
-    // Check if we have valid cached data
-    if (tweetCache && now - tweetCache.timestamp < CACHE_DURATION) {
-      console.log("Returning cached tweets")
+    // Check if we should fetch new tweets
+    if (!shouldFetchNewTweets() && tweetCache) {
+      console.log("Using cached tweets within 4-hour window")
       return NextResponse.json({ ...tweetCache.data, fromCache: true })
     }
 
@@ -58,13 +76,13 @@ export async function GET() {
 
     const endpointUrl = "https://api.twitter.com/2/tweets/search/recent"
 
-    // Modified query to only get tweets from @PiNetwork
+    // Modified query to only get tweets from @PiNetwork and limit to 3
     const params = new URLSearchParams({
       query: "from:PiNetwork -is:retweet",
       "tweet.fields": "created_at,public_metrics",
       expansions: "author_id",
       "user.fields": "name,username,profile_image_url",
-      max_results: "10",
+      max_results: "3", // Alleen de laatste 3 tweets
     })
 
     // Construct the full URL with parameters
@@ -95,9 +113,25 @@ export async function GET() {
       // If we hit rate limits, set the rate limit flag
       if (response.status === 429) {
         isRateLimited = true
-        // Set reset time to 4 hours from now
-        rateLimitResetTime = now + 4 * 60 * 60 * 1000
-        console.log(`Rate limited until ${new Date(rateLimitResetTime).toLocaleTimeString()}`)
+        
+        // Get reset time from response headers if available
+        const resetTimeHeader = response.headers.get('x-rate-limit-reset')
+        if (resetTimeHeader) {
+          rateLimitResetTime = parseInt(resetTimeHeader) * 1000 // Convert to milliseconds
+        } else {
+          // Calculate next 4-hour interval from midnight
+          const now = new Date()
+          const hours = now.getHours()
+          const nextResetHour = Math.ceil(hours / 4) * 4
+          const resetDate = new Date(now)
+          resetDate.setHours(nextResetHour, 0, 0, 0)
+          if (resetDate.getTime() <= now.getTime()) {
+            resetDate.setHours(resetDate.getHours() + 4)
+          }
+          rateLimitResetTime = resetDate.getTime()
+        }
+        
+        console.log(`Rate limited until ${new Date(rateLimitResetTime).toLocaleString()}`)
       }
 
       // If we have cached data and hit rate limits, return the cached data

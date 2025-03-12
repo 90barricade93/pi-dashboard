@@ -18,6 +18,14 @@ const currencySymbols: Record<Currency, string> = {
   RUB: "₽",
 }
 
+// Utility functie voor consistente number formatting
+const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3
+  }).format(value)
+}
+
 export default function PiCalculator() {
   const { currency } = useCurrency()
   const [piAmount, setPiAmount] = useState<string>("1000")
@@ -112,7 +120,7 @@ export default function PiCalculator() {
                 onClick={() => setPiAmount(amount.toString())}
                 className="flex-1"
               >
-                {amount.toLocaleString()}
+                {formatNumber(amount)}
               </Button>
             ))}
           </div>
@@ -135,12 +143,12 @@ export default function PiCalculator() {
           <div className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center">
             <span>Powered by</span>
             <a
-              href="https://www.coingecko.com"
+              href="https://www.okx.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center ml-1 hover:text-foreground transition-colors"
             >
-              CoinGecko
+              OKX
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"

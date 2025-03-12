@@ -29,11 +29,15 @@ interface NewsItem {
   }
 }
 
-// News refresh interval in milliseconds (10 minutes)
-const NEWS_REFRESH_INTERVAL = 10 * 60 * 1000
+// News refresh interval in milliseconds (4 hours)
+const NEWS_REFRESH_INTERVAL = 4 * 60 * 60 * 1000
 
 // Rate limit reset period (4 hours in milliseconds)
 const RATE_LIMIT_RESET = 4 * 60 * 60 * 1000
+
+// Local storage keys
+const TWITTER_CACHE_KEY = "twitter-cache"
+const TWITTER_RATE_LIMIT_KEY = "twitter-rate-limited"
 
 export default function NewsFeed() {
   const [news, setNews] = useState<NewsItem[]>([])
@@ -44,28 +48,45 @@ export default function NewsFeed() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [twitterDisabled, setTwitterDisabled] = useState(false)
 
-  // Check for stored rate limit status on component mount
+  // Check for stored rate limit status and cached tweets on component mount
   useEffect(() => {
     try {
-      const storedRateLimitInfo = localStorage.getItem("twitter-rate-limited")
+      // Check rate limit status
+      const storedRateLimitInfo = localStorage.getItem(TWITTER_RATE_LIMIT_KEY)
       if (storedRateLimitInfo) {
         const rateLimitInfo = JSON.parse(storedRateLimitInfo)
         const now = Date.now()
 
-        // If the rate limit timestamp is still valid, disable Twitter
         if (now < rateLimitInfo.resetTime) {
           setTwitterDisabled(true)
-
-          // Calculate time remaining until reset
-          const timeRemaining = Math.ceil((rateLimitInfo.resetTime - now) / (60 * 1000)) // in minutes
+          const timeRemaining = Math.ceil((rateLimitInfo.resetTime - now) / (60 * 1000))
           setNotice(`Twitter API is rate limited. Will try again in approximately ${timeRemaining} minutes.`)
         } else {
-          // Rate limit has expired, clear it
-          localStorage.removeItem("twitter-rate-limited")
+          localStorage.removeItem(TWITTER_RATE_LIMIT_KEY)
+        }
+      }
+
+      // Load cached tweets
+      const cachedTwitterData = localStorage.getItem(TWITTER_CACHE_KEY)
+      if (cachedTwitterData) {
+        const { data, timestamp } = JSON.parse(cachedTwitterData)
+        const now = Date.now()
+        const hoursSinceCache = (now - timestamp) / (60 * 60 * 1000)
+
+        // Only use cache if it's less than 4 hours old
+        if (hoursSinceCache < 4) {
+          const twitterNews = processTweets(data)
+          setNews(prevNews => {
+            const nonTwitterNews = prevNews.filter(item => item.category !== "twitter")
+            return [...twitterNews, ...nonTwitterNews]
+          })
+          setNotice("Using cached Twitter data")
+        } else {
+          localStorage.removeItem(TWITTER_CACHE_KEY)
         }
       }
     } catch (e) {
-      console.error("Error checking stored rate limit:", e)
+      console.error("Error checking stored data:", e)
     }
   }, [])
 
@@ -74,7 +95,6 @@ export default function NewsFeed() {
     setLoading(true)
     setError(null)
 
-    // Only update notice if it's not already set (preserve rate limit notice)
     if (!notice || !notice.includes("rate limited")) {
       setNotice(null)
     }
@@ -133,21 +153,17 @@ export default function NewsFeed() {
       },
     ]
 
-    // Only try to fetch Twitter data if it's not disabled
     let allNews = [...mockNews]
 
     if (!twitterDisabled) {
       try {
         const twitterResponse = await fetch("/api/twitter-news", {
-          // Add cache: 'no-store' to prevent caching of the request
           cache: "no-store",
-          // Add a unique parameter to prevent caching
           headers: {
             "X-Timestamp": Date.now().toString(),
           },
         })
 
-        // First check if the response is ok before trying to parse JSON
         if (!twitterResponse.ok) {
           const errorText = await twitterResponse.text()
           console.error("Twitter API error:", errorText)
@@ -156,51 +172,51 @@ export default function NewsFeed() {
           let errorData
 
           try {
-            // Try to parse the error as JSON
             errorData = JSON.parse(errorText)
             if (errorData.error) {
               errorMessage = errorData.error
             }
           } catch (e) {
-            // If parsing fails, use the text directly
             errorMessage = `Error: ${errorText}`
           }
 
-          // If we get a rate limit error, disable Twitter for this session
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true)
-
-            // Store rate limit info in localStorage with a reset time
             const resetTime = Date.now() + RATE_LIMIT_RESET
             localStorage.setItem(
-              "twitter-rate-limited",
+              TWITTER_RATE_LIMIT_KEY,
               JSON.stringify({
                 timestamp: Date.now(),
                 resetTime: resetTime,
-              }),
+              })
             )
 
-            // Calculate time until reset in minutes
             const resetMinutes = Math.ceil(RATE_LIMIT_RESET / (60 * 1000))
             setNotice(`Twitter API is rate limited. Will try again in approximately ${resetMinutes} minutes.`)
           } else {
             setNotice(errorMessage)
           }
         } else {
-          // Only try to parse JSON if the response is ok
           const twitterData = await twitterResponse.json()
 
           if (twitterData.data && twitterData.includes) {
-            // Process tweets
+            // Store tweets in localStorage
+            localStorage.setItem(
+              TWITTER_CACHE_KEY,
+              JSON.stringify({
+                data: twitterData,
+                timestamp: Date.now(),
+              })
+            )
+
             const twitterNews = processTweets(twitterData)
             allNews = [...twitterNews, ...mockNews]
 
             if (twitterData.fromCache) {
-              setNotice("Using cached Twitter data due to rate limits.")
+              setNotice("Using cached Twitter data")
             }
 
-            // Clear any stored rate limit since we successfully got data
-            localStorage.removeItem("twitter-rate-limited")
+            localStorage.removeItem(TWITTER_RATE_LIMIT_KEY)
           } else {
             setNotice("Twitter data format is unexpected. Showing other news sources only.")
           }
@@ -284,7 +300,7 @@ export default function NewsFeed() {
   const handleRetryTwitter = () => {
     if (twitterDisabled) {
       // Clear rate limit status
-      localStorage.removeItem("twitter-rate-limited")
+      localStorage.removeItem(TWITTER_RATE_LIMIT_KEY)
       setTwitterDisabled(false)
       setNotice("Retrying Twitter integration...")
       fetchNews()

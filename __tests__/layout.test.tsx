@@ -15,7 +15,7 @@ describe('RootLayout', () => {
         <div>Test Content</div>
       </RootLayout>
     );
-    
+
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
@@ -25,17 +25,19 @@ describe('RootLayout', () => {
         <div>Content</div>
       </RootLayout>
     );
-    
+
     // Check header elements
     expect(screen.getByText('90barricade93 Pi Dashboard')).toBeInTheDocument();
-    
+
     // Check footer elements
     expect(screen.getByText(/© \d{4}/)).toBeInTheDocument();
   });
 
   it('has correct metadata', () => {
     expect(metadata.title).toBe('Pi Network Dashboard');
-    expect(metadata.description).toBe('Track Pi cryptocurrency prices, news, and network statistics');
+    expect(metadata.description).toBe(
+      'Track Pi cryptocurrency prices, news, and network statistics'
+    );
   });
 
   it('applies the correct font class', () => {
@@ -44,7 +46,7 @@ describe('RootLayout', () => {
         <div>Content</div>
       </RootLayout>
     );
-    
+
     const body = document.querySelector('body');
     expect(body).toHaveClass('inter');
   });
@@ -55,8 +57,8 @@ describe('RootLayout', () => {
         <div>Content</div>
       </RootLayout>
     );
-    
+
     const html = document.querySelector('html');
     expect(html).toHaveAttribute('lang', 'en');
   });
-}); 
+});

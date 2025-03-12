@@ -46,4 +46,4 @@ Bedankt voor je interesse in het bijdragen aan dit project! Dit document bevat r
 
 ## Contact
 
-Heb je vragen? Neem contact op met het development team. 
+Heb je vragen? Neem contact op met het development team.

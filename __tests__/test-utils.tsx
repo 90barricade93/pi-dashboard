@@ -15,4 +15,4 @@ function render(ui: React.ReactElement, options = {}) {
 
 // re-export everything
 export * from '@testing-library/react';
-export { render }; 
+export { render };

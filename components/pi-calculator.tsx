@@ -1,97 +1,97 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { useCurrency, type Currency } from "@/contexts/currency-context"
-import { fetchPiPrice, fallbackPrices } from "@/lib/api-client"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useCurrency, type Currency } from '@/contexts/currency-context';
+import { fetchPiPrice, fallbackPrices } from '@/lib/api-client';
 
 const currencySymbols: Record<Currency, string> = {
-  EUR: "€",
-  USD: "$",
-  GBP: "£",
-  JPY: "¥",
-  RUB: "₽",
-}
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+  JPY: '¥',
+  RUB: '₽',
+};
 
 // Utility functie voor consistente number formatting
 const formatNumber = (value: number) => {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 3
-  }).format(value)
-}
+    maximumFractionDigits: 3,
+  }).format(value);
+};
 
 export default function PiCalculator() {
-  const { currency } = useCurrency()
-  const [piAmount, setPiAmount] = useState<string>("1000")
-  const [piPrice, setPiPrice] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { currency } = useCurrency();
+  const [piAmount, setPiAmount] = useState<string>('1000');
+  const [piPrice, setPiPrice] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch current Pi price
   useEffect(() => {
     const getPiPrice = async () => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       try {
         // Fetch current price
-        const { price: newPrice, error: priceError } = await fetchPiPrice(currency)
+        const { price: newPrice, error: priceError } = await fetchPiPrice(currency);
 
         if (newPrice !== null) {
-          setPiPrice(newPrice)
+          setPiPrice(newPrice);
         } else {
-          setError(priceError)
+          setError(priceError);
           // Fallback to simulated price if API fails
-          setPiPrice(fallbackPrices[currency])
+          setPiPrice(fallbackPrices[currency]);
         }
       } catch (error) {
-        console.error("Error fetching Pi price:", error)
-        setError("Failed to fetch price data. Using fallback data.")
-        setPiPrice(fallbackPrices[currency])
+        console.error('Error fetching Pi price:', error);
+        setError('Failed to fetch price data. Using fallback data.');
+        setPiPrice(fallbackPrices[currency]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    getPiPrice()
-  }, [currency])
+    getPiPrice();
+  }, [currency]);
 
   // Calculate value based on amount and price
   const calculateValue = () => {
-    if (piPrice === null) return "0"
+    if (piPrice === null) return '0';
 
-    const amount = Number.parseFloat(piAmount) || 0
-    const value = amount * piPrice
+    const amount = Number.parseFloat(piAmount) || 0;
+    const value = amount * piPrice;
 
     // Format based on currency and value size
     if (value < 0.01) {
-      return value.toFixed(8)
+      return value.toFixed(8);
     } else if (value < 1) {
-      return value.toFixed(4)
+      return value.toFixed(4);
     } else if (value < 1000) {
-      return value.toFixed(2)
+      return value.toFixed(2);
     } else {
-      return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
     }
-  }
+  };
 
   // Handle input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    const value = e.target.value;
     // Allow only numbers and decimal point
-    if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
-      setPiAmount(value)
+    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+      setPiAmount(value);
     }
-  }
+  };
 
   // Preset amount buttons
-  const presetAmounts = [100, 1000, 10000, 100000]
+  const presetAmounts = [100, 1000, 10000, 100000];
 
   return (
     <Card>
@@ -112,7 +112,7 @@ export default function PiCalculator() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {presetAmounts.map((amount) => (
+            {presetAmounts.map(amount => (
               <Button
                 key={amount}
                 variant="outline"
@@ -167,6 +167,5 @@ export default function PiCalculator() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

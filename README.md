@@ -1,58 +1,32 @@
 # Pi Dashboard
 
-Een moderne, performante en veilige dashboard applicatie gebouwd met Next.js 14, React 18 en TypeScript.
+Een moderne dashboard applicatie voor het monitoren van Pi Network statistieken, prijzen en nieuws.
 
-## 🚀 Features
+## Features
 
-- ⚡️ Next.js 14 met App Router
-- 🎨 Tailwind CSS voor styling
-- 🔒 TypeScript voor type safety
-- 🧪 Jest & Playwright voor testing
-- 🐳 Docker ondersteuning
-- 🔄 CI/CD met GitHub Actions
-- 📱 Responsive design
-- 🌙 Dark/Light mode
-- ♿️ Toegankelijkheid (ARIA, keyboard navigation)
-- 🔒 Security best practices
-- 📈 Real-time prijsdata via OKX API
+- Real-time prijstracking via OKX API
+- Prijsvoorspellingen gebaseerd op historische data
+- Pi Calculator voor waarde berekeningen
+- Nieuws feed met integratie van officiële Pi Network tweets
+- Netwerk statistieken
+- Dark/Light thema ondersteuning
+- Responsive design
 
-## 🛠️ Technische Stack
+## Technische Stack
 
-- **Framework:** Next.js 14.1.0
-- **UI Library:** React 18.2.0
-- **Styling:** Tailwind CSS
-- **Type Checking:** TypeScript
-- **Testing:** Jest & Playwright
-- **Containerization:** Docker
-- **CI/CD:** GitHub Actions
-- **Code Quality:** ESLint & Prettier
-- **API Integration:** OKX API v5
+- Next.js 15
+- React 18
+- TypeScript
+- Tailwind CSS
+- Radix UI componenten
+- OKX API voor prijsdata
+- Twitter API v2 voor nieuws updates
 
-## 📋 Vereisten
-
-- Node.js 20.x
-- npm 10.x
-- Docker (optioneel)
-- OKX API credentials
-
-## 🔑 Environment Variables
-
-Maak een `.env` bestand aan in de root van het project met de volgende variabelen:
-
-```env
-# OKX API Credentials
-OKX_API_KEY=jouw_api_key
-OKX_API_SECRET=jouw_api_secret
-OKX_PASSPHRASE=jouw_passphrase
-```
-
-Deze credentials kun je verkrijgen via je OKX account onder API Management.
-
-## 🚀 Installatie
+## Setup
 
 1. Clone de repository:
 ```bash
-git clone https://github.com/90barricade93/pi-dashboard.git
+git clone https://github.com/yourusername/pi-dashboard.git
 cd pi-dashboard
 ```
 
@@ -62,88 +36,65 @@ npm install
 ```
 
 3. Configureer environment variables:
-- Kopieer `.env.example` naar `.env`
-- Vul je OKX API credentials in
+```bash
+cp .env.example .env.local
+```
+
+Vul de volgende environment variables in:
+- `OKX_API_KEY`: Je OKX API key
+- `OKX_API_SECRET`: Je OKX API secret
+- `OKX_PASSPHRASE`: Je OKX API passphrase
+- `TWITTER_BEARER_TOKEN`: Je Twitter API bearer token
 
 4. Start de development server:
 ```bash
 npm run dev
 ```
 
-De applicatie is nu beschikbaar op `http://localhost:3000`
+## Code Kwaliteit
 
-## 🧪 Testing
+Het project gebruikt verschillende tools voor code kwaliteit:
 
-### Unit Tests
-```bash
-npm test
-```
+- ESLint voor code linting
+- Prettier voor code formatting
+- Husky voor pre-commit hooks
+- lint-staged voor efficiënte linting
 
-### E2E Tests
-```bash
-npm run test:e2e
-```
+Beschikbare scripts:
+- `npm run lint`: ESLint check
+- `npm run lint:fix`: ESLint fix
+- `npm run format`: Prettier format
+- `npm run format:check`: Prettier check
+- `npm run type-check`: TypeScript check
+- `npm run validate`: Alle checks uitvoeren
 
-## 🐳 Docker
+## Tests
 
-### Build
-```bash
-docker build -t pi-dashboard .
-```
+- Unit tests: `npm test`
+- E2E tests: `npm run test:e2e`
 
-### Run
-```bash
-docker run -p 3000:3000 pi-dashboard
-```
+## Deployment
 
-## 📝 Scripts
+De applicatie is geoptimaliseerd voor deployment op Vercel:
 
-- `npm run dev` - Start development server
-- `npm run build` - Build voor productie
-- `npm start` - Start productie server
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code met Prettier
-- `npm test` - Run unit tests
-- `npm run test:e2e` - Run end-to-end tests
+1. Push je code naar GitHub
+2. Verbind je repository met Vercel
+3. Configureer de environment variables
+4. Deploy!
 
-## 🔒 Security
+## API Rate Limiting
 
-- Security headers geconfigureerd
-- Dependency updates geautomatiseerd
-- TypeScript strict mode
-- ESLint security regels
-- Input validatie met Zod
+- OKX API: Requests worden gecached voor 4 uur
+- Twitter API: Maximum 3 tweets per request, gecached voor 4 uur vanaf middernacht
 
-## 🤝 Bijdragen
+## Contributing
 
-We verwelkomen bijdragen! Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor details.
+1. Fork de repository
+2. Maak een feature branch
+3. Commit je wijzigingen (met Conventional Commits)
+4. Push naar de branch
+5. Open een Pull Request
 
-## 📄 Licentie
+## License
 
-Dit project is gelicentieerd onder de MIT License - zie het [LICENSE](LICENSE) bestand voor details.
-
-## 📞 Contact
-
-- GitHub Issues: [https://github.com/90barricade93/pi-dashboard/issues](https://github.com/90barricade93/pi-dashboard/issues)
-- Email: [jouw-email@example.com](mailto:jouw-email@example.com)
-
-## 🙏 Credits
-
-- [Next.js](https://nextjs.org/)
-- [React](https://reactjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Radix UI](https://www.radix-ui.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-
-## 📈 API Integratie
-
-De applicatie gebruikt de OKX API v5 voor real-time prijsdata. De belangrijkste endpoints zijn:
-
-- `/market/ticker` - Voor real-time prijsinformatie
-- `/market/candles` - Voor historische prijsdata
-
-De API client is geconfigureerd met:
-- Automatische valuta conversie
-- Fallback prijzen bij API fouten
-- Rate limiting volgens OKX specificaties
-- Veilige authenticatie handling
+MIT License - Zie LICENSE bestand voor details

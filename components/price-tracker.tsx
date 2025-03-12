@@ -1,58 +1,58 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useCurrency, type Currency } from "@/contexts/currency-context"
-import { fetchPiPrice } from "@/lib/api-client"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useCurrency, type Currency } from '@/contexts/currency-context';
+import { fetchPiPrice } from '@/lib/api-client';
 
 const currencySymbols: Record<Currency, string> = {
-  EUR: "€",
-  USD: "$",
-  GBP: "£",
-  JPY: "¥",
-  RUB: "₽",
-}
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+  JPY: '¥',
+  RUB: '₽',
+};
 
 export default function PriceTracker() {
-  const { currency, setCurrency } = useCurrency()
-  const [price, setPrice] = useState<number | null>(null)
-  const [previousPrice, setPreviousPrice] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { currency, setCurrency } = useCurrency();
+  const [price, setPrice] = useState<number | null>(null);
+  const [previousPrice, setPreviousPrice] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch Pi price from OKX API
   const getPiPrice = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     // Store previous price for comparison
     if (price !== null) {
-      setPreviousPrice(price)
+      setPreviousPrice(price);
     }
 
     try {
-      const result = await fetchPiPrice(currency)
-      
+      const result = await fetchPiPrice(currency);
+
       if (result.error) {
-        throw new Error(result.error)
+        throw new Error(result.error);
       }
 
       if (result.price !== null) {
-        setPrice(result.price)
-        setLastUpdated(new Date())
+        setPrice(result.price);
+        setLastUpdated(new Date());
       } else {
-        throw new Error("Price data not available")
+        throw new Error('Price data not available');
       }
     } catch (error) {
-      console.error("Error fetching Pi price:", error)
-      setError("Failed to fetch price data. Using fallback data.")
+      console.error('Error fetching Pi price:', error);
+      setError('Failed to fetch price data. Using fallback data.');
 
       // Fallback to simulated data if API fails
-      const basePrice = 0.00032 // Approximate Pi price in USD as fallback
+      const basePrice = 0.00032; // Approximate Pi price in USD as fallback
 
       // Apply currency conversion (simplified for fallback)
       const rates: Record<Currency, number> = {
@@ -61,43 +61,43 @@ export default function PriceTracker() {
         GBP: 0.79,
         JPY: 150,
         RUB: 92,
-      }
+      };
 
-      const convertedPrice = basePrice * rates[currency]
-      setPrice(convertedPrice)
-      setLastUpdated(new Date())
+      const convertedPrice = basePrice * rates[currency];
+      setPrice(convertedPrice);
+      setLastUpdated(new Date());
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Initial fetch and setup interval for updates
   useEffect(() => {
-    getPiPrice()
+    getPiPrice();
 
     // Update price every 30 seconds
-    const interval = setInterval(getPiPrice, 30000)
+    const interval = setInterval(getPiPrice, 30000);
 
-    return () => clearInterval(interval)
-  }, [currency])
+    return () => clearInterval(interval);
+  }, [currency]);
 
   // Calculate price change
-  const priceChange = price !== null && previousPrice !== null ? price - previousPrice : null
+  const priceChange = price !== null && previousPrice !== null ? price - previousPrice : null;
 
   const priceChangePercent =
     price !== null && previousPrice !== null && previousPrice !== 0
       ? ((price - previousPrice) / previousPrice) * 100
-      : null
+      : null;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Pi Price</CardTitle>
         <div className="flex gap-1">
-          {Object.keys(currencySymbols).map((curr) => (
+          {Object.keys(currencySymbols).map(curr => (
             <Button
               key={curr}
-              variant={currency === curr ? "default" : "outline"}
+              variant={currency === curr ? 'default' : 'outline'}
               size="sm"
               onClick={() => setCurrency(curr as Currency)}
               className="w-12"
@@ -117,14 +117,18 @@ export default function PriceTracker() {
             <>
               <div className="text-4xl font-bold mb-2">
                 {currencySymbols[currency]}
-                {price?.toFixed(currency === "JPY" || currency === "RUB" ? 5 : 6)}
+                {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
               </div>
 
               {priceChange !== null && (
                 <div
                   className={cn(
-                    "flex items-center text-sm",
-                    priceChange > 0 ? "text-green-500" : priceChange < 0 ? "text-red-500" : "text-gray-500",
+                    'flex items-center text-sm',
+                    priceChange > 0
+                      ? 'text-green-500'
+                      : priceChange < 0
+                        ? 'text-red-500'
+                        : 'text-gray-500'
                   )}
                 >
                   {priceChange > 0 ? (
@@ -133,10 +137,10 @@ export default function PriceTracker() {
                     <ArrowDown className="h-4 w-4 mr-1" />
                   ) : null}
                   <span>
-                    {priceChange > 0 ? "+" : ""}
+                    {priceChange > 0 ? '+' : ''}
                     {priceChange.toFixed(8)}(
                     {priceChangePercent !== null
-                      ? (priceChangePercent > 0 ? "+" : "") + priceChangePercent.toFixed(2)
+                      ? (priceChangePercent > 0 ? '+' : '') + priceChangePercent.toFixed(2)
                       : 0}
                     %)
                   </span>
@@ -183,6 +187,5 @@ export default function PriceTracker() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

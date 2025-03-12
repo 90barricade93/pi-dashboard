@@ -14,19 +14,23 @@ export class OKXApiClient {
     this.config = {
       apiKey: process.env['OKX_API_KEY'] || '',
       apiSecret: process.env['OKX_API_SECRET'] || '',
-      passphrase: process.env['OKX_PASSPHRASE'] || ''
+      passphrase: process.env['OKX_PASSPHRASE'] || '',
     };
   }
 
-  private generateSignature(timestamp: string, method: string, path: string, body?: string): string {
+  private generateSignature(
+    timestamp: string,
+    method: string,
+    path: string,
+    body?: string
+  ): string {
     const message = timestamp + method + path + (body || '');
-    return crypto
-      .createHmac('sha256', this.config.apiSecret)
-      .update(message)
-      .digest('base64');
+    return crypto.createHmac('sha256', this.config.apiSecret).update(message).digest('base64');
   }
 
-  async fetchPiPrice(currency: string = 'USD'): Promise<{ price: number | null; error: string | null }> {
+  async fetchPiPrice(
+    currency: string = 'USD'
+  ): Promise<{ price: number | null; error: string | null }> {
     try {
       const timestamp = new Date().toISOString();
       const path = '/market/ticker';
@@ -39,7 +43,7 @@ export class OKXApiClient {
           'OK-ACCESS-SIGN': signature,
           'OK-ACCESS-TIMESTAMP': timestamp,
           'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-        }
+        },
       });
 
       if (!response.ok) {
@@ -58,14 +62,17 @@ export class OKXApiClient {
           const conversionSymbol = `${currency.toUpperCase()}-USDT`;
           const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
 
-          const conversionResponse = await fetch(`${this.baseUrl}${conversionPath}?instId=${conversionSymbol}`, {
-            headers: {
-              'OK-ACCESS-KEY': this.config.apiKey,
-              'OK-ACCESS-SIGN': conversionSignature,
-              'OK-ACCESS-TIMESTAMP': timestamp,
-              'OK-ACCESS-PASSPHRASE': this.config.passphrase,
+          const conversionResponse = await fetch(
+            `${this.baseUrl}${conversionPath}?instId=${conversionSymbol}`,
+            {
+              headers: {
+                'OK-ACCESS-KEY': this.config.apiKey,
+                'OK-ACCESS-SIGN': conversionSignature,
+                'OK-ACCESS-TIMESTAMP': timestamp,
+                'OK-ACCESS-PASSPHRASE': this.config.passphrase,
+              },
             }
-          });
+          );
 
           if (conversionResponse.ok) {
             const conversionData = await conversionResponse.json();
@@ -84,12 +91,15 @@ export class OKXApiClient {
       console.error('Error fetching Pi price from OKX:', error);
       return {
         price: null,
-        error: 'Failed to fetch price data from OKX'
+        error: 'Failed to fetch price data from OKX',
       };
     }
   }
 
-  async fetchHistoricalData(currency: string = 'USD', days: number = 7): Promise<{ data: any; error: string | null }> {
+  async fetchHistoricalData(
+    currency: string = 'USD',
+    days: number = 7
+  ): Promise<{ data: any; error: string | null }> {
     try {
       const timestamp = new Date().toISOString();
       const path = '/market/candles';
@@ -107,7 +117,7 @@ export class OKXApiClient {
             'OK-ACCESS-SIGN': signature,
             'OK-ACCESS-TIMESTAMP': timestamp,
             'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-          }
+          },
         }
       );
 
@@ -121,12 +131,12 @@ export class OKXApiClient {
         // Transform data to match expected format
         const prices = data.data.map((candle: any) => [
           parseInt(candle[0]), // timestamp
-          parseFloat(candle[4]) // closing price
+          parseFloat(candle[4]), // closing price
         ]);
 
         return {
           data: { prices },
-          error: null
+          error: null,
         };
       }
 
@@ -135,8 +145,8 @@ export class OKXApiClient {
       console.error('Error fetching historical data from OKX:', error);
       return {
         data: null,
-        error: 'Failed to fetch historical data from OKX'
+        error: 'Failed to fetch historical data from OKX',
       };
     }
   }
-} 
+}

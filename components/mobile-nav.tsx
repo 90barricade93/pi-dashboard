@@ -1,14 +1,14 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger, SheetDescription } from "@/components/ui/sheet"
-import { Menu, X } from "lucide-react"
-import { ThemeToggleSwitch } from "@/components/theme-toggle"
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import { Menu, X } from 'lucide-react';
+import { ThemeToggleSwitch } from '@/components/theme-toggle';
 
 export function MobileNav() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -19,11 +19,15 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="flex flex-col">
-        <SheetDescription className="sr-only">Mobile navigation menu for Pi Dashboard</SheetDescription>
+        <SheetDescription className="sr-only">
+          Mobile navigation menu for Pi Dashboard
+        </SheetDescription>
         <div className="flex items-center justify-between border-b pb-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
             <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">π</div>
+              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+                π
+              </div>
             </div>
             <span className="font-bold text-xl">Pi Dashboard</span>
           </Link>
@@ -40,13 +44,25 @@ export function MobileNav() {
           </div>
 
           <div className="space-y-1">
-            <Link href="/" className="block px-2 py-1 text-lg hover:underline" onClick={() => setOpen(false)}>
+            <Link
+              href="/"
+              className="block px-2 py-1 text-lg hover:underline"
+              onClick={() => setOpen(false)}
+            >
               Dashboard
             </Link>
-            <Link href="/news" className="block px-2 py-1 text-lg hover:underline" onClick={() => setOpen(false)}>
+            <Link
+              href="/news"
+              className="block px-2 py-1 text-lg hover:underline"
+              onClick={() => setOpen(false)}
+            >
               News
             </Link>
-            <Link href="/calculator" className="block px-2 py-1 text-lg hover:underline" onClick={() => setOpen(false)}>
+            <Link
+              href="/calculator"
+              className="block px-2 py-1 text-lg hover:underline"
+              onClick={() => setOpen(false)}
+            >
               Pi Calculator
             </Link>
           </div>
@@ -59,6 +75,5 @@ export function MobileNav() {
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
-

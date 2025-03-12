@@ -1,6 +1,6 @@
-"use client"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+'use client';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +8,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Bell } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
+} from '@/components/ui/dropdown-menu';
+import { Bell } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Header() {
   return (
@@ -20,7 +20,9 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">π</div>
+              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+                π
+              </div>
             </div>
             <span className="font-bold text-xl">90barricade93 Pi Dashboard</span>
           </Link>
@@ -44,7 +46,9 @@ export default function Header() {
                 <DropdownMenuItem className="cursor-pointer">
                   <div className="flex flex-col gap-1">
                     <span className="font-medium">Pi Network Update</span>
-                    <span className="text-xs text-muted-foreground">New mainnet features announced</span>
+                    <span className="text-xs text-muted-foreground">
+                      New mainnet features announced
+                    </span>
                     <span className="text-xs text-muted-foreground">2 hours ago</span>
                   </div>
                 </DropdownMenuItem>
@@ -64,6 +68,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }
-

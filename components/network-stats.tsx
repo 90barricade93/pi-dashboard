@@ -1,30 +1,30 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { RefreshCw, Users, Globe, Zap } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { RefreshCw, Users, Globe, Zap } from 'lucide-react';
 
 interface NetworkStats {
-  activeUsers: number
-  totalNodes: number
-  blockHeight: number
-  transactionsPerSecond: number
-  consensusRate: number
+  activeUsers: number;
+  totalNodes: number;
+  blockHeight: number;
+  transactionsPerSecond: number;
+  consensusRate: number;
 }
 
 export default function NetworkStats() {
-  const [stats, setStats] = useState<NetworkStats | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<NetworkStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Simulate fetching network stats
   useEffect(() => {
     const fetchStats = async () => {
-      setLoading(true)
+      setLoading(true);
 
       try {
         // In a real app, you would fetch from an API
-        await new Promise((resolve) => setTimeout(resolve, 1200))
+        await new Promise(resolve => setTimeout(resolve, 1200));
 
         // Mock data - replace with actual API call
         const mockStats: NetworkStats = {
@@ -33,31 +33,31 @@ export default function NetworkStats() {
           blockHeight: 1250000 + Math.floor(Math.random() * 1000),
           transactionsPerSecond: 150 + Math.floor(Math.random() * 50),
           consensusRate: 98.5 + Math.random() * 1.5,
-        }
+        };
 
-        setStats(mockStats)
+        setStats(mockStats);
       } catch (error) {
-        console.error("Error fetching network stats:", error)
+        console.error('Error fetching network stats:', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchStats()
+    fetchStats();
 
     // Update stats every 30 seconds
-    const interval = setInterval(fetchStats, 30000)
+    const interval = setInterval(fetchStats, 30000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   const formatNumber = (num: number) => {
     return num >= 1000000
-      ? (num / 1000000).toFixed(1) + "M"
+      ? (num / 1000000).toFixed(1) + 'M'
       : num >= 1000
-        ? (num / 1000).toFixed(1) + "K"
-        : num.toString()
-  }
+        ? (num / 1000).toFixed(1) + 'K'
+        : num.toString();
+  };
 
   return (
     <Card>
@@ -119,6 +119,5 @@ export default function NetworkStats() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
-

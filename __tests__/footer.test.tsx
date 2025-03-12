@@ -10,14 +10,14 @@ describe('Footer', () => {
 
   it('renders the footer with logo and brand name', () => {
     render(<Footer />);
-    
+
     expect(screen.getByText('Pi Dashboard')).toBeInTheDocument();
     expect(screen.getByText('π')).toBeInTheDocument();
   });
 
   it('renders the resources section', () => {
     render(<Footer />);
-    
+
     expect(screen.getByText('Resources')).toBeInTheDocument();
     expect(screen.getByText('Developers')).toBeInTheDocument();
     expect(screen.getByText('Pi Whitepaper')).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe('Footer', () => {
 
   it('renders the connect section', () => {
     render(<Footer />);
-    
+
     expect(screen.getByText('Connect')).toBeInTheDocument();
     expect(screen.getByText('Created by Raymond de Vries')).toBeInTheDocument();
     expect(screen.getByText('Subscribe to our newsletter for updates')).toBeInTheDocument();
@@ -34,14 +34,14 @@ describe('Footer', () => {
 
   it('renders the copyright notice', () => {
     render(<Footer />);
-    
+
     expect(screen.getByText(/©/)).toBeInTheDocument();
     expect(screen.getByText('90barricade93 Pi Dashboard')).toBeInTheDocument();
   });
 
   it('renders and tests resource links', () => {
     render(<Footer />);
-    
+
     const links = [
       { text: 'Developers', href: '/developers' },
       { text: 'Pi Whitepaper', href: '/whitepaper' },
@@ -57,7 +57,7 @@ describe('Footer', () => {
 
   it('renders and tests social media links', () => {
     render(<Footer />);
-    
+
     const twitterLink = screen.getByRole('link', { name: /twitter/i });
     const linkedinLink = screen.getByRole('link', { name: /linkedin/i });
 
@@ -69,7 +69,7 @@ describe('Footer', () => {
 
   it('handles newsletter subscription form', () => {
     render(<Footer />);
-    
+
     const emailInput = screen.getByPlaceholderText('Your email');
     const subscribeButton = screen.getByRole('button', { name: /subscribe/i });
 
@@ -83,7 +83,7 @@ describe('Footer', () => {
 
   it('renders footer policies links', () => {
     render(<Footer />);
-    
+
     const policyLinks = [
       { text: 'Privacy Policy', href: '/privacy' },
       { text: 'Terms of Service', href: '/terms' },
@@ -99,8 +99,8 @@ describe('Footer', () => {
 
   it('renders the current year in copyright notice', () => {
     render(<Footer />);
-    
+
     const currentYear = new Date().getFullYear().toString();
     expect(screen.getByText(new RegExp(currentYear))).toBeInTheDocument();
   });
-}); 
+});

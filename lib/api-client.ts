@@ -9,7 +9,7 @@ export const fallbackPrices = {
   GBP: 0.00025,
   JPY: 0.048,
   RUB: 0.029,
-}
+};
 
 const okxClient = new OKXApiClient();
 
@@ -38,33 +38,34 @@ const okxClient = new OKXApiClient();
 /**
  * Fetch current Pi price from OKX
  */
-export const fetchPiPrice = async (currency: string): Promise<{ price: number | null; error: string | null }> => {
+export const fetchPiPrice = async (
+  currency: string
+): Promise<{ price: number | null; error: string | null }> => {
   try {
     return await okxClient.fetchPiPrice(currency);
   } catch (error) {
-    console.error("Error fetching Pi price:", error);
+    console.error('Error fetching Pi price:', error);
     return {
       price: null,
-      error: "Failed to fetch price data. Using fallback data.",
-    }
+      error: 'Failed to fetch price data. Using fallback data.',
+    };
   }
-}
+};
 
 /**
  * Fetch historical Pi price data from OKX
  */
 export const fetchPiHistoricalData = async (
   currency: string,
-  days = 7,
+  days = 7
 ): Promise<{ data: any; error: string | null }> => {
   try {
     return await okxClient.fetchHistoricalData(currency, days);
   } catch (error) {
-    console.error("Error fetching historical data:", error);
+    console.error('Error fetching historical data:', error);
     return {
       data: null,
-      error: "Failed to fetch historical data. Prediction may be less accurate.",
-    }
+      error: 'Failed to fetch historical data. Prediction may be less accurate.',
+    };
   }
-}
-
+};

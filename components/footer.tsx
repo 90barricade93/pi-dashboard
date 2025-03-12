@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ExternalLink, Twitter } from "lucide-react"
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, Twitter } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -11,12 +11,15 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-                <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">π</div>
+                <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+                  π
+                </div>
               </div>
               <span className="font-bold text-xl">Pi Dashboard</span>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              A comprehensive dashboard for tracking Pi cryptocurrency, network statistics, and ecosystem news.
+              A comprehensive dashboard for tracking Pi cryptocurrency, network statistics, and
+              ecosystem news.
             </p>
           </div>
 
@@ -25,7 +28,10 @@ export default function Footer() {
             <h3 className="text-sm font-medium mb-3">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/developers" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="/developers"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Developers
                 </Link>
               </li>
@@ -39,7 +45,10 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="/roadmap"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Roadmap
                 </Link>
               </li>
@@ -51,13 +60,21 @@ export default function Footer() {
             <h3 className="text-sm font-medium mb-3">Connect</h3>
             <div className="flex gap-2 mb-4">
               <Button variant="outline" size="icon" asChild>
-                <Link href="https://twitter.com/Vries_de_R" target="_blank" rel="noopener noreferrer">
+                <Link
+                  href="https://twitter.com/Vries_de_R"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Twitter className="h-4 w-4" />
                   <span className="sr-only">Twitter</span>
                 </Link>
               </Button>
               <Button variant="outline" size="icon" asChild>
-                <Link href="https://nl.linkedin.com/in/raymond-de-vries76" target="_blank" rel="noopener noreferrer">
+                <Link
+                  href="https://nl.linkedin.com/in/raymond-de-vries76"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -110,12 +127,11 @@ export default function Footer() {
 
         <div className="mt-4 text-xs text-muted-foreground text-center">
           <p>
-            Disclaimer: This dashboard is for informational purposes only and does not constitute financial advice. Pi
-            Network and Pi are trademarks of their respective owners.
+            Disclaimer: This dashboard is for informational purposes only and does not constitute
+            financial advice. Pi Network and Pi are trademarks of their respective owners.
           </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }
-

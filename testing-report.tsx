@@ -40,4 +40,3 @@
  * The header functions as expected with the remaining elements after removing
  * the search and user account features.
  */
-

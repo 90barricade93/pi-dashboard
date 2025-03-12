@@ -1,9 +1,9 @@
-import { CurrencyProvider } from "@/contexts/currency-context"
-import PriceTracker from "@/components/price-tracker"
-import PricePrediction from "@/components/price-prediction"
-import NewsFeed from "@/components/news-feed"
-import NetworkStats from "@/components/network-stats"
-import PiCalculator from "@/components/pi-calculator"
+import { CurrencyProvider } from '@/contexts/currency-context';
+import PriceTracker from '@/components/price-tracker';
+import PricePrediction from '@/components/price-prediction';
+import NewsFeed from '@/components/news-feed';
+import NetworkStats from '@/components/network-stats';
+import PiCalculator from '@/components/pi-calculator';
 
 export default function Dashboard() {
   return (
@@ -28,6 +28,5 @@ export default function Dashboard() {
         </div>
       </CurrencyProvider>
     </main>
-  )
+  );
 }
-

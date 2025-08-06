@@ -131,7 +131,8 @@ export class OKXApiClient {
 
   async fetchHistoricalData(
     currency: string = 'USD',
-    days: number = 7
+    days: number = 7,
+    bar?: '1m' | '3m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'
   ): Promise<{ data: any; error: string | null }> {
     try {
       const timestamp = new Date().toISOString();
@@ -139,11 +140,11 @@ export class OKXApiClient {
       const symbol = 'PI-USDT';
       const signature = this.generateSignature(timestamp, 'GET', path);
 
-      // Convert days to granularity (1D = 86400 seconds)
-      const bar = '1D';
+      // Use provided granularity or default heuristic
+      const resolvedBar = bar ?? (days <= 2 ? '1H' : '1D');
 
       const response = await fetch(
-        `${this.baseUrl}${path}?instId=${symbol}&bar=${bar}&limit=${days}`,
+        `${this.baseUrl}${path}?instId=${symbol}&bar=${resolvedBar}&limit=${days}`,
         {
           headers: {
             'OK-ACCESS-KEY': this.config.apiKey,
@@ -161,11 +162,62 @@ export class OKXApiClient {
       const data = await response.json();
 
       if (data?.data) {
-        // Transform data to match expected format
-        const prices = data.data.map((candle: any) => [
+        // Base prices are in USDT terms. Convert if a different currency is requested.
+        let prices = data.data.map((candle: any) => [
           parseInt(candle[0]), // timestamp
           parseFloat(candle[4]), // closing price
-        ]);
+        ] as [number, number]);
+
+        if (currency.toUpperCase() !== 'USD') {
+          // Map desired currency to its USDT pair for conversion
+          const currencyPairs: Record<string, string> = {
+            EUR: 'EUR-USDT',
+            GBP: 'GBP-USDT',
+            JPY: 'JPY-USDT',
+            RUB: 'RUB-USDT',
+          };
+
+          const fallbackRates: Record<string, number> = {
+            EUR: 0.92,
+            GBP: 0.79,
+            JPY: 150,
+            RUB: 92,
+          };
+
+          const convSymbol = currencyPairs[currency.toUpperCase()];
+          if (convSymbol) {
+            try {
+              const conversionPath = '/market/ticker';
+              const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
+              const conversionResponse = await fetch(
+                `${this.baseUrl}${conversionPath}?instId=${convSymbol}`,
+                {
+                  headers: {
+                    'OK-ACCESS-KEY': this.config.apiKey,
+                    'OK-ACCESS-SIGN': conversionSignature,
+                    'OK-ACCESS-TIMESTAMP': timestamp,
+                    'OK-ACCESS-PASSPHRASE': this.config.passphrase,
+                  },
+                }
+              );
+
+              let rate = fallbackRates[currency.toUpperCase()] ?? 1;
+              if (conversionResponse.ok) {
+                const conversionData = await conversionResponse.json();
+                const last = parseFloat(conversionData?.data?.[0]?.last ?? '');
+                if (!isNaN(last) && last > 0) {
+                  rate = last;
+                }
+              }
+
+              prices = prices.map(([ts, p]: [number, number]) => [ts, p * rate] as [number, number]);
+            } catch (e) {
+              // On any error, fall back to static rate
+              const rate = fallbackRates[currency.toUpperCase()] ?? 1;
+              prices = prices.map(([ts, p]: [number, number]) => [ts, p * rate] as [number, number]);
+            }
+          }
+        }
 
         return {
           data: { prices },

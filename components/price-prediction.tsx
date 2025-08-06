@@ -69,8 +69,24 @@ export default function PricePrediction() {
           setCurrentPrice(fallbackPrices[currency]);
         }
 
-        // Fetch historical data (last 7 days)
-        const { data: historyData, error: historyError } = await fetchPiHistoricalData(currency, 7);
+        // Fetch historical data with granularity suited for the selected timeframe
+        const getHistoryParams = (tf: TimeFrame): { limit: number; bar: Parameters<typeof fetchPiHistoricalData>[2] } => {
+          switch (tf) {
+            case '30min':
+              return { limit: 72, bar: '5m' }; // ~6h coverage at 5m
+            case '1hour':
+              return { limit: 144, bar: '5m' }; // ~12h at 5m
+            case '2hours':
+              return { limit: 192, bar: '15m' }; // ~2 days at 15m
+            case '6hours':
+              return { limit: 192, bar: '30m' }; // ~4 days at 30m
+            case '12hours':
+              return { limit: 168, bar: '1H' }; // 7 days at 1h
+          }
+        };
+
+        const { limit, bar } = getHistoryParams(selectedTimeFrame);
+        const { data: historyData, error: historyError } = await fetchPiHistoricalData(currency, limit, bar);
 
         if (historyData && historyData.prices) {
           // Format the historical data
@@ -97,7 +113,7 @@ export default function PricePrediction() {
     };
 
     fetchPriceData();
-  }, [currency]);
+  }, [currency, selectedTimeFrame]);
 
   // Generate prediction based on historical data and current price
   useEffect(() => {
@@ -290,7 +306,7 @@ export default function PricePrediction() {
     return () => clearTimeout(timer);
   }, [currentPrice, historicalData, selectedTimeFrame]);
 
-  // Draw prediction chart
+  // Fix canvas rendering
   useEffect(() => {
     if (!prediction || !canvasRef.current) return;
 
@@ -298,523 +314,311 @@ export default function PricePrediction() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas dimensions
-    const dpr = window.devicePixelRatio || 1;
+    // Set canvas size to match display size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    canvas.width = rect.width;
+    canvas.height = rect.height;
 
     // Clear canvas
-    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Chart dimensions
-    const padding = 20;
+    const padding = 60; // Increased padding for better label visibility
     const chartWidth = rect.width - padding * 2;
     const chartHeight = rect.height - padding * 2;
 
-    // Draw time axis
-    ctx.beginPath();
-    ctx.moveTo(padding, rect.height - padding);
-    ctx.lineTo(rect.width - padding, rect.height - padding);
-    ctx.strokeStyle = '#94a3b8'; // slate-400
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // Calculate time range
+    const now = Date.now();
+    const timeRangeMs = getTimeRangeMs(selectedTimeFrame);
+    const startTime = now - (timeRangeMs * 2); // Show 2x historical data
+    const endTime = now + timeRangeMs;
 
-    // Calculate time markers based on selected timeframe
-    const getTimeMarkers = () => {
-      switch (selectedTimeFrame) {
-        case '12hours':
-          return ['Now', '+3h', '+6h', '+9h', '+12h'];
-        case '6hours':
-          return ['Now', '+1.5h', '+3h', '+4.5h', '+6h'];
-        case '2hours':
-          return ['Now', '+30m', '+1h', '+1.5h', '+2h'];
-        case '1hour':
-          return ['Now', '+15m', '+30m', '+45m', '+1h'];
-        case '30min':
-          return ['Now', '+7.5m', '+15m', '+22.5m', '+30m'];
-        default:
-          return ['Now', '+30m', '+1h', '+1.5h', '+2h'];
-      }
-    };
+    // Get relevant historical data
+    const relevantData = historicalData
+      .filter(point => point.timestamp >= startTime && point.timestamp <= now)
+      .sort((a, b) => a.timestamp - b.timestamp);
 
-    const timeMarkers = getTimeMarkers();
-
-    timeMarkers.forEach((marker, i) => {
-      const x = padding + i * (chartWidth / (timeMarkers.length - 1));
-      ctx.fillStyle = '#64748b'; // slate-500
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(marker, x, rect.height - padding + 15);
-
-      // Draw vertical grid line (except for first and last)
-      if (i > 0 && i < timeMarkers.length - 1) {
-        ctx.beginPath();
-        ctx.moveTo(x, padding);
-        ctx.lineTo(x, rect.height - padding);
-        ctx.strokeStyle = '#e2e8f0'; // slate-200
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
-    });
-
-    // Calculate optimal price range based on data
-    // First, collect all relevant price points
-    const allPrices: number[] = [];
-
-    // Add current and target prices
-    allPrices.push(prediction.currentPrice);
-    allPrices.push(prediction.targetPrice);
-
-    // Add historical data points if available
-    if (historicalData.length > 0) {
-      const dataPoints =
-        selectedTimeFrame === '12hours'
-          ? 96 // 4 days worth of 1-hour data points
-          : selectedTimeFrame === '6hours'
-            ? 48 // 2 days worth
-            : 24; // 1 day worth for shorter timeframes
-
-      const recentData = historicalData.slice(-dataPoints);
-      recentData.forEach(point => allPrices.push(point.price));
+    // If we have no historical data points, create one at the current price
+    if (relevantData.length === 0 && prediction.currentPrice) {
+      relevantData.push({
+        timestamp: now,
+        price: prediction.currentPrice
+      });
     }
 
-    // Find min and max prices
-    const minDataPrice = Math.min(...allPrices);
-    const maxDataPrice = Math.max(...allPrices);
+    // Calculate price range including historical and prediction
+    // Interpolate a price at the exact "now" timestamp to ensure continuity
+    let nowPriceForGraph = prediction.currentPrice;
+    if (relevantData.length >= 2) {
+      const before = [...relevantData].filter(p => p.timestamp <= now).pop();
+      const after = [...relevantData].find(p => p.timestamp >= now);
+      if (before && after) {
+        if (after.timestamp === before.timestamp) {
+          nowPriceForGraph = before.price;
+        } else {
+          const ratio = (now - before.timestamp) / (after.timestamp - before.timestamp);
+          nowPriceForGraph = before.price + ratio * (after.price - before.price);
+        }
+      } else if (before) {
+        // No point after now; use the last known price
+        nowPriceForGraph = before.price;
+      }
+    } else if (relevantData.length === 1) {
+      nowPriceForGraph = relevantData[0].price;
+    }
 
-    // Calculate price range with padding
-    const dataRange = maxDataPrice - minDataPrice;
+    const allPrices = [
+      ...relevantData.map(point => point.price),
+      nowPriceForGraph,
+      prediction.targetPrice
+    ].filter(price => !isNaN(price) && price !== null);
 
-    // Add padding to make the visualization more readable
-    // Use percentage-based padding that adapts to the data range
-    const paddingPercentage = 0.1; // 10% padding
+    // Ensure we have valid prices before proceeding
+    if (allPrices.length === 0) return;
+    
+    const minPrice = Math.min(...allPrices) * 0.99; // Add 1% padding
+    const maxPrice = Math.max(...allPrices) * 1.01;
+    const priceRange = maxPrice - minPrice;
 
-    // For very small ranges (like stable predictions), ensure minimum visibility
-    const minVisibleRange = prediction.currentPrice * 0.005; // At least 0.5% of current price
-    const effectiveRange = Math.max(dataRange, minVisibleRange);
+    // Helper functions
+    const timeToX = (timestamp: number): number => {
+      return padding + ((timestamp - startTime) / (endTime - startTime)) * chartWidth;
+    };
 
-    // Apply padding to min and max
-    const minPrice = minDataPrice - effectiveRange * paddingPercentage;
-    const maxPrice = maxDataPrice + effectiveRange * paddingPercentage;
-
-    // For cryptocurrencies with very small values, consider using logarithmic scale
-    // Check if the range spans multiple orders of magnitude
-    const useLogarithmic = maxPrice / minPrice > 10;
-
-    // Function to convert price to Y coordinate
     const priceToY = (price: number): number => {
-      if (useLogarithmic) {
-        // Logarithmic scale for wide ranges
-        const logMin = Math.log(Math.max(minPrice, 0.0000001)); // Avoid log(0)
-        const logMax = Math.log(maxPrice);
-        const logPrice = Math.log(Math.max(price, 0.0000001));
-        return rect.height - padding - ((logPrice - logMin) / (logMax - logMin)) * chartHeight;
-      } else {
-        // Linear scale for narrower ranges
-        return rect.height - padding - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
-      }
+      return rect.height - padding - ((price - minPrice) / priceRange) * chartHeight;
     };
 
-    // Draw price axis
+    // Draw grid
     ctx.beginPath();
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, rect.height - padding);
-    ctx.strokeStyle = '#94a3b8'; // slate-400
+    ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 1;
-    ctx.stroke();
 
-    // Draw price markers - more markers for better readability
-    const numMarkers = useLogarithmic ? 5 : 4; // More markers for logarithmic scale
-    const priceMarkers: number[] = [];
-
-    if (useLogarithmic) {
-      // Generate logarithmically spaced markers
-      const logMin = Math.log(Math.max(minPrice, 0.0000001));
-      const logMax = Math.log(maxPrice);
-      for (let i = 0; i < numMarkers; i++) {
-        const logValue = logMin + (i / (numMarkers - 1)) * (logMax - logMin);
-        priceMarkers.push(Math.exp(logValue));
-      }
-    } else {
-      // Generate linearly spaced markers
-      for (let i = 0; i < numMarkers; i++) {
-        priceMarkers.push(minPrice + (i / (numMarkers - 1)) * (maxPrice - minPrice));
-      }
+    // Vertical grid lines (every hour)
+    const hourMs = 60 * 60 * 1000;
+    const startHour = Math.ceil(startTime / hourMs) * hourMs;
+    for (let t = startHour; t <= endTime; t += hourMs) {
+      const x = timeToX(t);
+      ctx.moveTo(x, padding);
+      ctx.lineTo(x, rect.height - padding);
     }
 
-    // Add current price as a marker for reference
-    if (
-      !priceMarkers.some(
-        p => Math.abs(p - prediction.currentPrice) / prediction.currentPrice < 0.01
-      )
-    ) {
-      priceMarkers.push(prediction.currentPrice);
-      // Sort markers to maintain order
-      priceMarkers.sort((a, b) => a - b);
-    }
-
-    // Draw the price markers
-    priceMarkers.forEach(price => {
-      const y = priceToY(price);
-
-      // Draw horizontal grid line
-      ctx.beginPath();
+    // Horizontal grid lines
+    const numPriceLines = 5;
+    for (let i = 0; i <= numPriceLines; i++) {
+      const y = padding + (i * chartHeight) / numPriceLines;
       ctx.moveTo(padding, y);
       ctx.lineTo(rect.width - padding, y);
-      ctx.strokeStyle = '#e2e8f0'; // slate-200
-      ctx.lineWidth = 0.5;
+    }
+    ctx.stroke();
+
+    // Draw axes
+    ctx.beginPath();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, rect.height - padding);
+    ctx.lineTo(rect.width - padding, rect.height - padding);
+    ctx.stroke();
+
+    // Draw price labels
+    ctx.font = '12px system-ui';
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= numPriceLines; i++) {
+      const price = minPrice + (i / numPriceLines) * priceRange;
+      const y = padding + ((numPriceLines - i) * chartHeight) / numPriceLines;
+      ctx.fillText(formatPrice(price), padding - 8, y + 4);
+    }
+
+    // Draw time labels
+    ctx.textAlign = 'center';
+    for (let t = startHour; t <= endTime; t += hourMs) {
+      const x = timeToX(t);
+      ctx.fillText(formatTime(t), x, rect.height - padding + 16);
+    }
+
+    // Draw historical data line
+    if (relevantData.length > 0) {
+      ctx.beginPath();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+
+      // Start from the first point
+      const firstPoint = relevantData[0];
+      ctx.moveTo(timeToX(firstPoint.timestamp), priceToY(firstPoint.price));
+
+      // Connect all points
+      relevantData.forEach((point, index) => {
+        if (index === 0) return; // Skip first point as we already moved to it
+        ctx.lineTo(timeToX(point.timestamp), priceToY(point.price));
+      });
+
+      // Extend to the exact 'now' x-position using the interpolated price for continuity
+      ctx.lineTo(timeToX(now), priceToY(nowPriceForGraph));
+      
       ctx.stroke();
+    }
 
-      // Draw price label
-      ctx.fillStyle = '#64748b'; // slate-500
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'right';
+    // Draw prediction line
+    ctx.beginPath();
+    ctx.strokeStyle = prediction.trend === 'up' ? '#22c55e' : prediction.trend === 'down' ? '#ef4444' : '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    // Start prediction exactly at 'now' from the last historical value
+    ctx.moveTo(timeToX(now), priceToY(nowPriceForGraph));
+    ctx.lineTo(timeToX(endTime), priceToY(prediction.targetPrice));
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-      // Format price based on magnitude
-      let formattedPrice;
-      if (price < 0.001) {
-        formattedPrice = price.toExponential(2);
-      } else if (price < 0.01) {
-        formattedPrice = price.toFixed(6);
-      } else if (price < 1) {
-        formattedPrice = price.toFixed(4);
-      } else {
-        formattedPrice = price.toFixed(2);
-      }
+    // Draw current price point
+    ctx.beginPath();
+    ctx.fillStyle = '#94a3b8';
+    // Use the same 'now' value so the historical and prediction join smoothly
+    ctx.arc(timeToX(now), priceToY(nowPriceForGraph), 4, 0, Math.PI * 2);
+    ctx.fill();
 
-      ctx.fillText(formattedPrice, padding - 5, y + 3);
+    // Draw target price point
+    ctx.beginPath();
+    ctx.fillStyle = prediction.trend === 'up' ? '#22c55e' : prediction.trend === 'down' ? '#ef4444' : '#3b82f6';
+    ctx.arc(timeToX(endTime), priceToY(prediction.targetPrice), 4, 0, Math.PI * 2);
+    ctx.fill();
+
+  }, [prediction, historicalData, selectedTimeFrame, currency]);
+
+  // Helper functions
+  const formatPrice = (price: number): string => {
+    return currencySymbols[currency] + price.toFixed(6);
+  };
+
+  const formatTime = (timestamp: number): string => {
+    return new Date(timestamp).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
     });
+  };
 
-    // Draw historical data if available
-    if (historicalData.length > 0) {
-      // Take only the most recent data points based on timeframe
-      const dataPoints =
-        selectedTimeFrame === '12hours'
-          ? 96 // 4 days worth of 1-hour data points
-          : selectedTimeFrame === '6hours'
-            ? 48 // 2 days worth
-            : selectedTimeFrame === '2hours'
-              ? 24 // 1 day worth for shorter timeframes
-              : selectedTimeFrame === '1hour'
-                ? 12 // 12 hours worth
-                : 6; // 6 hours worth for 30min timeframe
-
-      // Calculate the time range for the selected prediction timeframe in milliseconds
-      const predictionTimeRangeMs =
-        selectedTimeFrame === '12hours'
-          ? 12 * 60 * 60 * 1000
-          : selectedTimeFrame === '6hours'
-            ? 6 * 60 * 60 * 1000
-            : selectedTimeFrame === '2hours'
-              ? 2 * 60 * 60 * 1000
-              : selectedTimeFrame === '1hour'
-                ? 60 * 60 * 1000
-                : 30 * 60 * 1000;
-
-      // Calculate how much historical data to show relative to prediction timeframe
-      // Show 2x the prediction timeframe of historical data
-      const historicalTimeRangeMs = predictionTimeRangeMs * 2;
-
-      // Get the most recent data points
-      const recentData = historicalData.slice(-dataPoints);
-
-      if (recentData.length > 1) {
-        // Find the timestamp at "now" (most recent data point)
-        const nowTimestamp = recentData[recentData.length - 1].timestamp;
-
-        // Find the earliest timestamp to show based on our desired historical range
-        const earliestTimestamp = nowTimestamp - historicalTimeRangeMs;
-
-        // Filter data to only show points within our desired time range
-        const visibleData = recentData.filter(point => point.timestamp >= earliestTimestamp);
-
-        // Calculate the total time range shown on the chart (historical + prediction)
-        const totalTimeRangeMs = historicalTimeRangeMs + predictionTimeRangeMs;
-
-        // Calculate the proportion of the chart width that should be allocated to historical data
-        const historyWidthProportion = historicalTimeRangeMs / totalTimeRangeMs;
-        const historyWidth = chartWidth * historyWidthProportion;
-
-        if (visibleData.length > 0) {
-          ctx.beginPath();
-
-          // Map the first point
-          const firstPoint = visibleData[0];
-          const firstPointX =
-            padding +
-            ((firstPoint.timestamp - earliestTimestamp) / historicalTimeRangeMs) * historyWidth;
-          const firstPointY = priceToY(firstPoint.price);
-
-          ctx.moveTo(firstPointX, firstPointY);
-
-          // Map historical data points
-          for (let i = 1; i < visibleData.length; i++) {
-            const dataPoint = visibleData[i];
-            const x =
-              padding +
-              ((dataPoint.timestamp - earliestTimestamp) / historicalTimeRangeMs) * historyWidth;
-            const y = priceToY(dataPoint.price);
-
-            ctx.lineTo(x, y);
-          }
-
-          // Style for historical data
-          ctx.strokeStyle = '#cbd5e1'; // slate-300
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Add subtle gradient under the historical line
-          const gradient = ctx.createLinearGradient(0, padding, 0, rect.height - padding);
-          gradient.addColorStop(0, 'rgba(203, 213, 225, 0.1)'); // slate-300 with opacity
-          gradient.addColorStop(1, 'rgba(203, 213, 225, 0)');
-
-          // Fill area under historical line
-          const lastPoint = visibleData[visibleData.length - 1];
-          const lastPointX =
-            padding +
-            ((lastPoint.timestamp - earliestTimestamp) / historicalTimeRangeMs) * historyWidth;
-
-          ctx.lineTo(lastPointX, rect.height - padding);
-          ctx.lineTo(firstPointX, rect.height - padding);
-          ctx.closePath();
-          ctx.fillStyle = gradient;
-          ctx.fill();
-
-          // Store the "now" point for connecting to prediction
-          const nowX = lastPointX;
-          const nowY = priceToY(prediction.currentPrice);
-
-          // Draw prediction line - start from where historical data ends
-          ctx.beginPath();
-          ctx.moveTo(nowX, nowY);
-
-          // Calculate the end point of the prediction line
-          const predictionEndX = padding + chartWidth;
-          const predictionEndY = priceToY(prediction.targetPrice);
-
-          ctx.lineTo(predictionEndX, predictionEndY);
-
-          // Color based on trend
-          ctx.strokeStyle =
-            prediction.trend === 'up'
-              ? '#10b981' // emerald-500 for up trend
-              : prediction.trend === 'down'
-                ? '#ef4444' // red-500 for down trend
-                : '#6366f1'; // indigo-500 for stable trend
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Add gradient under the prediction line
-          const predictionGradient = ctx.createLinearGradient(0, padding, 0, rect.height - padding);
-          if (prediction.trend === 'up') {
-            predictionGradient.addColorStop(0, 'rgba(16, 185, 129, 0.1)'); // emerald-500
-            predictionGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-          } else if (prediction.trend === 'down') {
-            predictionGradient.addColorStop(0, 'rgba(239, 68, 68, 0.1)'); // red-500
-            predictionGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
-          } else {
-            predictionGradient.addColorStop(0, 'rgba(99, 102, 241, 0.1)'); // indigo-500
-            predictionGradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
-          }
-
-          // Fill area under prediction line
-          ctx.lineTo(predictionEndX, rect.height - padding);
-          ctx.lineTo(nowX, rect.height - padding);
-          ctx.closePath();
-          ctx.fillStyle = predictionGradient;
-          ctx.fill();
-
-          // Add current and target price points
-          // Current price point
-          ctx.beginPath();
-          ctx.arc(nowX, nowY, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#0f172a'; // slate-900
-          ctx.fill();
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          // Target price point
-          ctx.beginPath();
-          ctx.arc(predictionEndX, predictionEndY, 4, 0, Math.PI * 2);
-          ctx.fillStyle =
-            prediction.trend === 'up'
-              ? '#10b981' // emerald-500
-              : prediction.trend === 'down'
-                ? '#ef4444' // red-500
-                : '#6366f1'; // indigo-500
-          ctx.fill();
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
+  const getTimeRangeMs = (timeFrame: TimeFrame): number => {
+    switch (timeFrame) {
+      case '30min':
+        return 30 * 60 * 1000;
+      case '1hour':
+        return 60 * 60 * 1000;
+      case '2hours':
+        return 2 * 60 * 60 * 1000;
+      case '6hours':
+        return 6 * 60 * 60 * 1000;
+      case '12hours':
+        return 12 * 60 * 60 * 1000;
     }
-
-    // Add scale type indicator if using logarithmic scale
-    if (useLogarithmic) {
-      ctx.fillStyle = '#64748b'; // slate-500
-      ctx.font = '9px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('log scale', padding + 5, padding + 10);
-    }
-
-    setLoading(false);
-  }, [prediction, selectedTimeFrame, historicalData]);
+  };
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle>Price Prediction</CardTitle>
-          <Tabs
-            value={selectedTimeFrame}
-            onValueChange={v => setSelectedTimeFrame(v as TimeFrame)}
-            className="h-8"
-          >
-            <TabsList>
-              <TabsTrigger value="30min" className="text-xs px-2 h-7">
-                30m
-              </TabsTrigger>
-              <TabsTrigger value="1hour" className="text-xs px-2 h-7">
-                1h
-              </TabsTrigger>
-              <TabsTrigger value="2hours" className="text-xs px-2 h-7">
-                2h
-              </TabsTrigger>
-              <TabsTrigger value="6hours" className="text-xs px-2 h-7">
-                6h
-              </TabsTrigger>
-              <TabsTrigger value="12hours" className="text-xs px-2 h-7">
-                12h
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Price Prediction</CardTitle>
       </CardHeader>
       <CardContent>
-        {loading || !currentPrice ? (
-          <div className="h-[200px] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Analyzing market data...</span>
+        <div className="space-y-4">
+          <Tabs
+            value={selectedTimeFrame}
+            onValueChange={value => setSelectedTimeFrame(value as TimeFrame)}
+          >
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="30min">30m</TabsTrigger>
+              <TabsTrigger value="1hour">1h</TabsTrigger>
+              <TabsTrigger value="2hours">2h</TabsTrigger>
+              <TabsTrigger value="6hours">6h</TabsTrigger>
+              <TabsTrigger value="12hours">12h</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {loading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </div>
-        ) : prediction ? (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'p-2 rounded-full',
-                    prediction.trend === 'up'
-                      ? 'bg-emerald-100'
-                      : prediction.trend === 'down'
-                        ? 'bg-red-100'
-                        : 'bg-indigo-100'
-                  )}
-                >
-                  {prediction.trend === 'up' ? (
-                    <TrendingUp className="h-5 w-5 text-emerald-600" />
-                  ) : prediction.trend === 'down' ? (
-                    <TrendingDown className="h-5 w-5 text-red-600" />
-                  ) : (
-                    <Minus className="h-5 w-5 text-indigo-600" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-sm font-medium">
-                    {prediction.trend === 'up'
-                      ? 'Bullish Prediction'
-                      : prediction.trend === 'down'
-                        ? 'Bearish Prediction'
-                        : 'Stable Prediction'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {prediction.confidence.toFixed(0)}% confidence
+          ) : prediction ? (
+            <>
+              <div className="relative aspect-[2/1] w-full">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Current Price</div>
+                  <div className="font-medium">
+                    {currencySymbols[currency]}
+                    {prediction.currentPrice.toFixed(6)}
                   </div>
                 </div>
-              </div>
 
-              <div className="text-right">
-                <div className="text-sm font-medium">Target Price</div>
-                <div
-                  className={cn(
-                    'text-lg font-bold flex items-center',
-                    prediction.trend === 'up'
-                      ? 'text-emerald-600'
-                      : prediction.trend === 'down'
-                        ? 'text-red-600'
-                        : 'text-indigo-600'
-                  )}
-                >
-                  {currencySymbols[currency]}
-                  {prediction.targetPrice.toFixed(8)}
-                  {prediction.trend === 'up' ? (
-                    <ArrowUpRight className="h-4 w-4 ml-1" />
-                  ) : prediction.trend === 'down' ? (
-                    <ArrowDownRight className="h-4 w-4 ml-1" />
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            <div className="h-[150px] mb-4">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full"
-                style={{ width: '100%', height: '100%' }}
-              />
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-1 text-amber-500 text-xs mb-3">
-                <AlertCircle className="h-3 w-3" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <div className="bg-slate-50 p-3 rounded-md">
-              <h4 className="text-sm font-medium mb-2">Reasoning</h4>
-              <ul className="text-sm text-slate-700 space-y-1">
-                {prediction.reasons.map((reason, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="mr-2">•</span>
-                    <span>{reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {prediction && (
-              <div className="text-xs text-center text-muted-foreground mt-4 flex items-center justify-center">
-                <span>Powered by</span>
-                <a
-                  href="https://www.okx.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center ml-1 hover:text-foreground transition-colors"
-                >
-                  OKX
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-3 w-3 ml-1"
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Target Price</div>
+                  <div
+                    className={cn(
+                      'font-medium',
+                      prediction.trend === 'up'
+                        ? 'text-green-500'
+                        : prediction.trend === 'down'
+                          ? 'text-red-500'
+                          : 'text-blue-500'
+                    )}
                   >
-                    <path d="M7 17L17 7"></path>
-                    <path d="M7 7h10v10"></path>
-                  </svg>
-                </a>
+                    {currencySymbols[currency]}
+                    {prediction.targetPrice.toFixed(6)}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">Trend</div>
+                  <div className="flex items-center gap-1">
+                    {prediction.trend === 'up' ? (
+                      <>
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span className="text-green-500">Bullish</span>
+                      </>
+                    ) : prediction.trend === 'down' ? (
+                      <>
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                        <span className="text-red-500">Bearish</span>
+                      </>
+                    ) : (
+                      <>
+                        <Minus className="h-4 w-4 text-blue-500" />
+                        <span className="text-blue-500">Stable</span>
+                      </>
+                    )}
+                    <span className="text-sm text-muted-foreground ml-1">
+                      ({prediction.confidence}% confidence)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 mt-4">
+                  <div className="text-sm font-medium">Analysis</div>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {prediction.reasons.map((reason, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            )}
-          </div>
-        ) : null}
+            </>
+          ) : null}
+
+          {error && (
+            <div className="flex items-center gap-2 text-amber-500 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

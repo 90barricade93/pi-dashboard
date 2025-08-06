@@ -32,9 +32,6 @@ interface NewsItem {
 // News refresh interval in milliseconds (4 hours)
 const NEWS_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
 
-// Rate limit reset period (4 hours in milliseconds)
-const RATE_LIMIT_RESET = 4 * 60 * 60 * 1000;
-
 // Local storage keys
 const TWITTER_CACHE_KEY = 'twitter-cache';
 const TWITTER_RATE_LIMIT_KEY = 'twitter-rate-limited';
@@ -167,38 +164,48 @@ export default function NewsFeed() {
         });
 
         if (!twitterResponse.ok) {
-          const errorText = await twitterResponse.text();
-          console.error('Twitter API error:', errorText);
-
-          let errorMessage = 'Could not load Twitter data.';
-          let errorData;
-
+          // Read as JSON if possible to extract retryAt; fallback to text
+          let errorBody: any = null;
+          let errorText = '';
           try {
-            errorData = JSON.parse(errorText);
-            if (errorData.error) {
-              errorMessage = errorData.error;
-            }
-          } catch (e) {
-            errorMessage = `Error: ${errorText}`;
+            errorBody = await twitterResponse.json();
+          } catch {
+            try {
+              errorText = await twitterResponse.text();
+            } catch {}
           }
+
+          // Use warn instead of error to avoid Next.js error overlay for handled states
+          console.warn('Twitter API warning:', errorBody || errorText);
+
+          const baseMessage = (errorBody && (errorBody.error || errorBody.message))
+            ? (errorBody.error || errorBody.message)
+            : (errorText ? `Error: ${errorText}` : 'Could not load Twitter data.');
 
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true);
-            const resetTime = Date.now() + RATE_LIMIT_RESET;
+
+            // Prefer server-provided retryAt; fallback 15 minutes; last fallback 4 hours
+            const retryAt = typeof errorBody?.retryAt === 'number'
+              ? errorBody.retryAt
+              : Date.now() + 15 * 60 * 1000;
+
             localStorage.setItem(
               TWITTER_RATE_LIMIT_KEY,
-              JSON.stringify({
-                timestamp: Date.now(),
-                resetTime: resetTime,
-              })
+              JSON.stringify({ timestamp: Date.now(), resetTime: retryAt })
             );
 
-            const resetMinutes = Math.ceil(RATE_LIMIT_RESET / (60 * 1000));
-            setNotice(
-              `Twitter API is rate limited. Will try again in approximately ${resetMinutes} minutes.`
-            );
+            const mins = Math.max(1, Math.ceil((retryAt - Date.now()) / (60 * 1000)));
+            setNotice(`Twitter API is rate limited. Will try again in approximately ${mins} minutes.`);
+
+            // Early return to avoid throwing handled 429s further
+            allNews = [...mockNews];
+            setNews(allNews);
+            setLastUpdated(new Date());
+            setLoading(false);
+            return;
           } else {
-            setNotice(errorMessage);
+            setNotice(baseMessage);
           }
         } else {
           const twitterData = await twitterResponse.json();
@@ -226,7 +233,8 @@ export default function NewsFeed() {
           }
         }
       } catch (error) {
-        console.error('Error fetching Twitter data:', error);
+        // Non-fatal: log as warning and keep the rest of the feed working
+        console.warn('Error fetching Twitter data:', error);
         setNotice(
           `Error loading Twitter data: ${error instanceof Error ? error.message : String(error)}`
         );

@@ -935,7 +935,7 @@ export default function PricePrediction() {
                   </div>
                 )}
                 {/* Performance metrics display (development only) */}
-                {process.env.NODE_ENV === 'development' && performanceMetrics.length > 0 && (
+                {process.env['NODE_ENV'] === 'development' && performanceMetrics.length > 0 && (
                   <div className="absolute right-2 top-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
                     Render: {performanceMetrics[performanceMetrics.length - 1]?.renderTime.toFixed(1)}ms
                     {performanceMetrics[performanceMetrics.length - 1]?.renderTime > 500 && (

@@ -52,7 +52,7 @@ export default function PriceTracker() {
       setError('Failed to fetch price data. Using fallback data.');
 
       // Fallback to simulated data if API fails
-      const basePrice = 0.00032; // Approximate Pi price in USD as fallback
+      const basePrice = 0.31415; // Approximate Pi price in USD as fallback
 
       // Apply currency conversion (simplified for fallback)
       const rates: Record<Currency, number> = {
@@ -92,7 +92,7 @@ export default function PriceTracker() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle>Pi Price</CardTitle>
+        <CardTitle>Price</CardTitle>
         <div className="flex gap-1">
           {Object.keys(currencySymbols).map(curr => (
             <Button

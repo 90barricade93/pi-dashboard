@@ -352,7 +352,7 @@ export default function NewsFeed() {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle>Pi News</CardTitle>
+        <CardTitle>News</CardTitle>
         <div className="w-full max-w-[300px]">
           <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from 'lucide-react';
+// import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice } from '@/lib/api-client';
@@ -110,12 +110,12 @@ export default function PriceTracker() {
       <CardContent>
         <div className="flex flex-col items-center justify-center p-4">
           {loading ? (
-            <div className="flex items-center justify-center h-24">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex h-24 items-center justify-center">
+              <span className="text-2xl animate-spin">🔄</span>
             </div>
           ) : (
             <>
-              <div className="text-4xl font-bold mb-2">
+              <div className="mb-2 text-4xl font-bold">
                 {currencySymbols[currency]}
                 {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
               </div>
@@ -132,9 +132,9 @@ export default function PriceTracker() {
                   )}
                 >
                   {priceChange > 0 ? (
-                    <ArrowUp className="h-4 w-4 mr-1" />
+                    <span>↗️</span>
                   ) : priceChange < 0 ? (
-                    <ArrowDown className="h-4 w-4 mr-1" />
+                    <span>↘️</span>
                   ) : null}
                   <span>
                     {priceChange > 0 ? '+' : ''}
@@ -148,23 +148,23 @@ export default function PriceTracker() {
               )}
 
               {error && (
-                <div className="flex items-center gap-1 text-amber-500 text-xs mt-1">
-                  <AlertCircle className="h-3 w-3" />
+                <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
+                  <span>⚠️</span>
                   <span>{error}</span>
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground mt-4">
+              <div className="mt-4 text-xs text-muted-foreground">
                 Last updated: {lastUpdated?.toLocaleTimeString()}
               </div>
 
-              <div className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center">
+              <div className="mt-2 flex items-center justify-center text-center text-xs text-muted-foreground">
                 <span>Powered by</span>
                 <a
                   href="https://www.okx.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center ml-1 hover:text-foreground transition-colors"
+                  className="ml-1 flex items-center transition-colors hover:text-foreground"
                 >
                   OKX
                   <svg
@@ -175,7 +175,7 @@ export default function PriceTracker() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-3 w-3 ml-1"
+                    className="ml-1 size-3"
                   >
                     <path d="M7 17L17 7"></path>
                     <path d="M7 7h10v10"></path>

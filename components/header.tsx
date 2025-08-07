@@ -38,12 +38,12 @@ export default function Header() {
         {/* Logo and brand */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>
             </div>
-            <span className="font-bold text-xl">90barricade93 Pi Dashboard</span>
+            <span className="text-xl font-bold">90barricade93 Pi Dashboard</span>
           </Link>
         </div>
 
@@ -53,8 +53,8 @@ export default function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
-                <BellIcon className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
+                <BellIcon className="size-5" />
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-red-500"></span>
                 <span className="sr-only">Notifications</span>
               </Button>
             </DropdownMenuTrigger>

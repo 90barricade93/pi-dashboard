@@ -14,7 +14,7 @@ export function MobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
-          <MenuIcon className="h-5 w-5" />
+          <MenuIcon className="size-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
@@ -24,15 +24,15 @@ export function MobileNav() {
         </SheetDescription>
         <div className="flex items-center justify-between border-b pb-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>
             </div>
-            <span className="font-bold text-xl">Pi Dashboard</span>
+            <span className="text-xl font-bold">Pi Dashboard</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-            <CloseIcon className="h-5 w-5" />
+            <CloseIcon className="size-5" />
             <span className="sr-only">Close menu</span>
           </Button>
         </div>

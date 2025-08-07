@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, AlertCircle, Twitter, Info, CheckIcon as CheckVerified } from 'lucide-react';
+import { RefreshCw, AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -172,7 +172,9 @@ export default function NewsFeed() {
           } catch {
             try {
               errorText = await twitterResponse.text();
-            } catch {}
+            } catch {
+              // Ignore text parsing error
+            }
           }
 
           // Use warn instead of error to avoid Next.js error overlay for handled states
@@ -374,14 +376,14 @@ export default function NewsFeed() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             {lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
           </div>
           <div className="flex gap-2">
             {twitterDisabled && (
               <Button variant="outline" size="sm" onClick={handleRetryTwitter}>
-                <Twitter className="h-4 w-4 mr-1 text-blue-400" />
+                <Twitter className="mr-1 size-4 text-blue-400" />
                 Retry X
               </Button>
             )}
@@ -393,22 +395,22 @@ export default function NewsFeed() {
         </div>
 
         {notice && (
-          <div className="flex items-center gap-2 text-blue-500 text-sm mb-4 p-3 bg-blue-50 rounded-md">
-            <Info className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
+            <Info className="size-4" />
             <span>{notice}</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 text-amber-500 text-sm mb-4 p-3 bg-amber-50 rounded-md">
-            <AlertCircle className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-500">
+            <AlertCircle className="size-4" />
             <span>{error}</span>
           </div>
         )}
 
         {activeTab === 'twitter' && !twitterDisabled && (
-          <div className="flex items-center gap-2 text-blue-500 text-sm mb-4 p-3 bg-blue-50 rounded-md">
-            <Twitter className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
+            <Twitter className="size-4" />
             <span>Showing official tweets from @PiNetwork</span>
           </div>
         )}
@@ -421,7 +423,7 @@ export default function NewsFeed() {
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-1/2" />
-                <div className="flex justify-between items-center pt-2">
+                <div className="flex items-center justify-between pt-2">
                   <Skeleton className="h-3 w-20" />
                   <Skeleton className="h-3 w-24" />
                 </div>
@@ -435,11 +437,11 @@ export default function NewsFeed() {
                 <div key={item.id} className="border-b pb-4 last:border-0">
                   <div className="flex gap-3">
                     {item.imageUrl && (
-                      <div className="hidden sm:block flex-shrink-0">
+                      <div className="hidden shrink-0 sm:block">
                         <img
                           src={item.imageUrl || '/placeholder.svg'}
                           alt=""
-                          className="w-[120px] h-[80px] object-cover rounded-md"
+                          className="h-[80px] w-[120px] rounded-md object-cover"
                           loading="lazy"
                         />
                       </div>
@@ -448,23 +450,23 @@ export default function NewsFeed() {
                       <div className="flex items-center gap-2">
                         {item.category === 'twitter' && (
                           <div className="flex items-center">
-                            <Twitter className="h-4 w-4 text-blue-400" />
-                            <CheckVerified className="h-3 w-3 text-blue-500 ml-1" />
+                            <Twitter className="size-4 text-blue-400" />
+                            <CheckVerified className="ml-1 size-3 text-blue-500" />
                           </div>
                         )}
                         <a
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-lg hover:text-blue-600 transition-colors"
+                          className="text-lg font-medium transition-colors hover:text-blue-600"
                         >
                           {item.title}
                         </a>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{item.summary}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
 
                       {item.category === 'twitter' && item.metrics && (
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
                           {item.metrics.likes !== undefined && (
                             <span>{item.metrics.likes} likes</span>
                           )}
@@ -474,14 +476,14 @@ export default function NewsFeed() {
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center mt-2 text-xs">
+                      <div className="mt-2 flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">
                           {item.category === 'twitter' && item.author?.profileImageUrl ? (
                             <div className="flex items-center gap-1">
                               <img
                                 src={item.author.profileImageUrl || '/placeholder.svg'}
                                 alt={item.author.name}
-                                className="w-4 h-4 rounded-full"
+                                className="size-4 rounded-full"
                               />
                               <span>{item.source}</span>
                             </div>
@@ -498,14 +500,14 @@ export default function NewsFeed() {
                 </div>
               ))
             ) : (
-              <p className="text-center py-8 text-muted-foreground">
+              <p className="py-8 text-center text-muted-foreground">
                 No news available in this category.
               </p>
             )}
           </div>
         )}
 
-        <div className="mt-4 pt-3 border-t text-xs text-center text-muted-foreground">
+        <div className="mt-4 border-t pt-3 text-center text-xs text-muted-foreground">
           <p>
             This news feed aggregates content from Pi Network official sources, community forums,
             and official Pi Network tweets.

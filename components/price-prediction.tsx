@@ -1,20 +1,44 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  RefreshCw,
-  AlertCircle,
-} from 'lucide-react';
+// import {
+//   TrendingUp,
+//   TrendingDown,
+//   Minus,
+//   RefreshCw,
+//   AlertCircle,
+// } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice, fetchPiHistoricalData, fallbackPrices } from '@/lib/api-client';
+import { 
+  calculateResponsiveMetrics, 
+  calculateAdaptivePadding,
+  getElementFontSize 
+} from '@/lib/chart-responsive';
+import { 
+  calculateOptimalTimeLabels,
+  generateAdaptiveGridIntervals,
+  calculateTimeframeTransition
+} from '@/lib/time-label-manager';
+import {
+  formatPriceForSpace,
+  getCurrencySymbol,
+  type PriceFormattingOptions
+} from '@/lib/price-formatter';
+import {
+  useResizeObserver,
+  CanvasRedrawManager,
+  type PerformanceMetrics
+} from '@/lib/chart-performance';
+import { 
+  useChartAccessibility, 
+  useScreenReaderDescription,
+  useFocusIndicator 
+} from '@/hooks/use-chart-accessibility';
+import type { ChartAccessibilityData } from '@/lib/chart-accessibility';
 
 type PredictionTrend = 'up' | 'down' | 'stable';
 type TimeFrame = '30min' | '1hour' | '2hours' | '6hours' | '12hours';
@@ -33,13 +57,7 @@ interface HistoricalDataPoint {
   price: number;
 }
 
-const currencySymbols: Record<Currency, string> = {
-  EUR: '€',
-  USD: '$',
-  GBP: '£',
-  JPY: '¥',
-  RUB: '₽',
-};
+// Currency symbols are now handled by the price formatter
 
 export default function PricePrediction() {
   const { currency } = useCurrency();
@@ -49,7 +67,33 @@ export default function PricePrediction() {
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [, setPreviousTimeFrame] = useState<TimeFrame>('2hours');
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const redrawManagerRef = useRef<CanvasRedrawManager>(new CanvasRedrawManager());
+
+  // Accessibility features
+  const accessibility = useChartAccessibility({
+    accessibilityOptions: {
+      includeDataPoints: true,
+      includeAnalysis: true,
+      verboseDescription: false,
+      includeNavigation: true
+    },
+    enableKeyboardNavigation: true,
+    enableLiveRegions: true,
+    enableHighContrastDetection: true
+  });
+
+  const { DescriptionElement } = useScreenReaderDescription(
+    'price-prediction-chart',
+    accessibility.altText
+  );
+
+  // Focus indicator for canvas
+  useFocusIndicator(canvasRef, accessibility.isHighContrastMode);
 
   // Fetch current Pi price and historical data from CoinGecko
   useEffect(() => {
@@ -289,14 +333,35 @@ export default function PricePrediction() {
       const shuffledReasons = [...reasons].sort(() => 0.5 - Math.random());
       const selectedReasons = shuffledReasons.slice(0, numReasons);
 
-      setPrediction({
+      const newPrediction = {
         trend,
         confidence,
         targetPrice,
         currentPrice,
         timeFrame: selectedTimeFrame,
         reasons: selectedReasons,
-      });
+      };
+
+      setPrediction(newPrediction);
+
+      // Update accessibility data
+      const accessibilityData: ChartAccessibilityData = {
+        currentPrice,
+        targetPrice,
+        trend,
+        confidence,
+        timeFrame: selectedTimeFrame,
+        currency,
+        historicalDataPoints: historicalData.length,
+        priceChange: targetPrice - currentPrice,
+        priceChangePercent: ((targetPrice - currentPrice) / currentPrice) * 100,
+        reasons: selectedReasons
+      };
+
+      accessibility.updateAltText(accessibilityData);
+
+      // Announce data update
+      accessibility.announceDataUpdate(currentPrice, currency);
 
       setLoading(false);
     };
@@ -306,8 +371,8 @@ export default function PricePrediction() {
     return () => clearTimeout(timer);
   }, [currentPrice, historicalData, selectedTimeFrame]);
 
-  // Fix canvas rendering
-  useEffect(() => {
+  // Chart rendering function with performance monitoring and responsive integration
+  const renderChart = useCallback(() => {
     if (!prediction || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
@@ -316,15 +381,127 @@ export default function PricePrediction() {
 
     // Set canvas size to match display size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    
+    // Create draw parameters for change detection
+    const drawParams = {
+      prediction,
+      historicalData,
+      selectedTimeFrame,
+      currency,
+      canvasWidth: rect.width,
+      canvasHeight: rect.height
+    };
+
+    // Check if redraw is necessary
+    if (!redrawManagerRef.current.shouldRedraw(drawParams)) {
+      return; // Skip unnecessary redraw
+    }
+
+    // Setup HiDPI canvas for crisp rendering
+    try {
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      canvas.width = rect.width * devicePixelRatio;
+      canvas.height = rect.height * devicePixelRatio;
+      
+      // Scale context to match device pixel ratio
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      
+      // Set canvas CSS size to maintain layout
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    } catch (error) {
+      console.warn('HiDPI setup failed, using standard canvas:', error);
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
 
     // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, rect.width, rect.height);
 
-    const padding = 60; // Increased padding for better label visibility
-    const chartWidth = rect.width - padding * 2;
-    const chartHeight = rect.height - padding * 2;
+    // Configure smooth line rendering
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) {
+      ctx.imageSmoothingQuality = 'high';
+    }
+
+    // Determine device type for performance monitoring
+    const deviceType = rect.width <= 767 ? 'mobile' : rect.width <= 1023 ? 'tablet' : 'desktop';
+    const canvasSize = { width: rect.width, height: rect.height };
+
+    // Execute chart drawing with performance monitoring
+    const metric = redrawManagerRef.current.executeDraw(
+      'chart-render',
+      () => {
+        renderChartContent(ctx, rect, prediction, historicalData, selectedTimeFrame, currency);
+      },
+      deviceType,
+      canvasSize
+    );
+
+    // Update performance metrics state
+    setPerformanceMetrics(prev => [...prev.slice(-9), metric]); // Keep last 10 metrics
+  }, [prediction, historicalData, selectedTimeFrame, currency]);
+
+  // Separate function for the actual chart content rendering with full responsive integration
+  const renderChartContent = useCallback((
+    ctx: CanvasRenderingContext2D,
+    rect: DOMRect,
+    prediction: PredictionData,
+    historicalData: HistoricalDataPoint[],
+    selectedTimeFrame: TimeFrame,
+    currency: string
+  ) => {
+    try {
+      // Apply high contrast styles if needed
+      accessibility.applyHighContrastStyles(ctx);
+      
+      // Get colors based on high contrast mode
+      const colors = accessibility.highContrastColors;
+
+      // Calculate responsive metrics using the responsive system
+      const metrics = calculateResponsiveMetrics(rect.width, rect.height, selectedTimeFrame);
+      const { deviceType, fontSize } = metrics;
+      
+      // Enhanced price formatting with adaptive decimal places and currency awareness
+      const formatPriceForCanvas = (price: number, availableWidth: number, fontSize: number): string => {
+        const options: PriceFormattingOptions = {
+          currency: currency as Currency,
+          availableWidth,
+          fontSize,
+          maxDecimals: 6,
+          minDecimals: 0,
+          useCompactNotation: deviceType === 'mobile', // Use compact notation on mobile
+          preserveSignificantDigits: true
+        };
+        
+        const result = formatPriceForSpace(price, options);
+        return result.text;
+      };
+
+      // Calculate adaptive padding with price label protection
+      const adaptivePadding = calculateAdaptivePadding(
+        rect.width,
+        rect.height,
+        deviceType,
+        {
+          maxPrice: prediction.targetPrice,
+          minPrice: prediction.currentPrice,
+          currency: getCurrencySymbol(currency as Currency),
+          hasLongPriceLabels: true,
+          hasFrequentTimeLabels: selectedTimeFrame === '30min' || selectedTimeFrame === '1hour'
+        }
+      );
+      
+      const chartWidth = rect.width - adaptivePadding.left - adaptivePadding.right;
+      const chartHeight = rect.height - adaptivePadding.top - adaptivePadding.bottom;
+
+      // Ensure minimum chart dimensions for usability
+      if (chartWidth <= 0 || chartHeight <= 0) {
+        console.warn('Chart dimensions too small for rendering');
+        return;
+      }
 
     // Calculate time range
     const now = Date.now();
@@ -375,73 +552,109 @@ export default function PricePrediction() {
     // Ensure we have valid prices before proceeding
     if (allPrices.length === 0) return;
     
-    const minPrice = Math.min(...allPrices) * 0.99; // Add 1% padding
-    const maxPrice = Math.max(...allPrices) * 1.01;
+    // Optimize axis range padding for better data visualization (0.5-1.0% padding)
+    const rawMinPrice = Math.min(...allPrices);
+    const rawMaxPrice = Math.max(...allPrices);
+    const rawPriceRange = rawMaxPrice - rawMinPrice;
+    
+    // Use dynamic padding based on price range magnitude
+    const paddingPercent = rawPriceRange > 0 ? Math.min(1.0, Math.max(0.5, rawPriceRange * 0.01)) : 0.75;
+    const paddingAmount = rawPriceRange * (paddingPercent / 100);
+    
+    const minPrice = rawMinPrice - paddingAmount;
+    const maxPrice = rawMaxPrice + paddingAmount;
     const priceRange = maxPrice - minPrice;
 
-    // Helper functions
+    // Helper functions with responsive padding
     const timeToX = (timestamp: number): number => {
-      return padding + ((timestamp - startTime) / (endTime - startTime)) * chartWidth;
+      return adaptivePadding.left + ((timestamp - startTime) / (endTime - startTime)) * chartWidth;
     };
 
     const priceToY = (price: number): number => {
-      return rect.height - padding - ((price - minPrice) / priceRange) * chartHeight;
+      return rect.height - adaptivePadding.bottom - ((price - minPrice) / priceRange) * chartHeight;
     };
 
-    // Draw grid
+    // Calculate optimal time labels using intelligent label management
+    const timeLabels = calculateOptimalTimeLabels({
+      startTime,
+      endTime,
+      availableWidth: chartWidth,
+      timeFrame: selectedTimeFrame,
+      deviceType,
+      fontSize,
+      minDistance: deviceType === 'mobile' ? 35 : deviceType === 'tablet' ? 45 : 55
+    });
+
+    // Generate adaptive grid intervals based on timeframe
+    const gridIntervals = generateAdaptiveGridIntervals(
+      startTime,
+      endTime,
+      selectedTimeFrame,
+      deviceType
+    );
+
+    // Draw grid with adaptive spacing
     ctx.beginPath();
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = colors.grid;
     ctx.lineWidth = 1;
 
-    // Vertical grid lines (every hour)
-    const hourMs = 60 * 60 * 1000;
-    const startHour = Math.ceil(startTime / hourMs) * hourMs;
-    for (let t = startHour; t <= endTime; t += hourMs) {
-      const x = timeToX(t);
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, rect.height - padding);
-    }
+    // Vertical grid lines based on adaptive intervals
+    gridIntervals.forEach(timestamp => {
+      const x = timeToX(timestamp);
+      ctx.moveTo(x, adaptivePadding.top);
+      ctx.lineTo(x, rect.height - adaptivePadding.bottom);
+    });
 
-    // Horizontal grid lines
-    const numPriceLines = 5;
+    // Horizontal grid lines (responsive count based on device)
+    const numPriceLines = deviceType === 'mobile' ? 4 : deviceType === 'tablet' ? 5 : 6;
     for (let i = 0; i <= numPriceLines; i++) {
-      const y = padding + (i * chartHeight) / numPriceLines;
-      ctx.moveTo(padding, y);
-      ctx.lineTo(rect.width - padding, y);
+      const y = adaptivePadding.top + (i * chartHeight) / numPriceLines;
+      ctx.moveTo(adaptivePadding.left, y);
+      ctx.lineTo(rect.width - adaptivePadding.right, y);
     }
     ctx.stroke();
 
-    // Draw axes
+    // Draw axes with responsive positioning
     ctx.beginPath();
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = colors.foreground;
     ctx.lineWidth = 2;
-    ctx.moveTo(padding, padding);
-    ctx.lineTo(padding, rect.height - padding);
-    ctx.lineTo(rect.width - padding, rect.height - padding);
+    ctx.moveTo(adaptivePadding.left, adaptivePadding.top);
+    ctx.lineTo(adaptivePadding.left, rect.height - adaptivePadding.bottom);
+    ctx.lineTo(rect.width - adaptivePadding.right, rect.height - adaptivePadding.bottom);
     ctx.stroke();
 
-    // Draw price labels
-    ctx.font = '12px system-ui';
-    ctx.fillStyle = '#64748b';
+    // Draw price labels with responsive font size and positioning
+    const priceLabelFontSize = getElementFontSize(deviceType, 'price-labels', rect.width, rect.height);
+    ctx.font = `${priceLabelFontSize}px system-ui`;
+    ctx.fillStyle = colors.text;
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
     for (let i = 0; i <= numPriceLines; i++) {
       const price = minPrice + (i / numPriceLines) * priceRange;
-      const y = padding + ((numPriceLines - i) * chartHeight) / numPriceLines;
-      ctx.fillText(formatPrice(price), padding - 8, y + 4);
+      const y = adaptivePadding.top + ((numPriceLines - i) * chartHeight) / numPriceLines;
+      
+      // Format price with enhanced adaptive formatting
+      const formattedPrice = formatPriceForCanvas(price, adaptivePadding.left - 16, priceLabelFontSize);
+      ctx.fillText(formattedPrice, adaptivePadding.left - 8, y);
     }
 
-    // Draw time labels
+    // Draw time labels using intelligent label management
+    const timeLabelFontSize = getElementFontSize(deviceType, 'time-labels', rect.width, rect.height);
+    ctx.font = `${timeLabelFontSize}px system-ui`;
     ctx.textAlign = 'center';
-    for (let t = startHour; t <= endTime; t += hourMs) {
-      const x = timeToX(t);
-      ctx.fillText(formatTime(t), x, rect.height - padding + 16);
-    }
+    ctx.textBaseline = 'top';
+    
+    timeLabels.forEach(label => {
+      const x = timeToX(label.timestamp);
+      ctx.fillText(label.text, x, rect.height - adaptivePadding.bottom + 8);
+    });
 
-    // Draw historical data line
+    // Draw historical data line with responsive styling
     if (relevantData.length > 0) {
       ctx.beginPath();
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = colors.historical;
+      ctx.lineWidth = deviceType === 'mobile' ? 1.5 : 2;
 
       // Start from the first point
       const firstPoint = relevantData[0];
@@ -459,44 +672,133 @@ export default function PricePrediction() {
       ctx.stroke();
     }
 
-    // Draw prediction line
+    // Draw confidence band for prediction uncertainty
+    const confidenceLevel = prediction.confidence / 100;
+    const predictionRange = prediction.targetPrice - nowPriceForGraph;
+    const uncertaintyRange = Math.abs(predictionRange) * (1 - confidenceLevel) * 0.5;
+    
+    // Calculate confidence band boundaries
+    const upperBound = Math.max(prediction.targetPrice, nowPriceForGraph) + uncertaintyRange;
+    const lowerBound = Math.min(prediction.targetPrice, nowPriceForGraph) - uncertaintyRange;
+    
+    // Draw confidence band as semi-transparent area
     ctx.beginPath();
-    ctx.strokeStyle = prediction.trend === 'up' ? '#22c55e' : prediction.trend === 'down' ? '#ef4444' : '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.fillStyle = (prediction.trend === 'up' ? colors.upTrend : prediction.trend === 'down' ? colors.downTrend : colors.stable) + '20'; // 20% opacity
+    ctx.moveTo(timeToX(now), priceToY(nowPriceForGraph));
+    ctx.lineTo(timeToX(endTime), priceToY(upperBound));
+    ctx.lineTo(timeToX(endTime), priceToY(lowerBound));
+    ctx.lineTo(timeToX(now), priceToY(nowPriceForGraph));
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw prediction line with responsive styling
+    ctx.beginPath();
+    ctx.strokeStyle = prediction.trend === 'up' ? colors.upTrend : prediction.trend === 'down' ? colors.downTrend : colors.stable;
+    ctx.lineWidth = deviceType === 'mobile' ? 1.5 : 2;
+    const dashSize = deviceType === 'mobile' ? 4 : 5;
+    ctx.setLineDash([dashSize, dashSize]);
     // Start prediction exactly at 'now' from the last historical value
     ctx.moveTo(timeToX(now), priceToY(nowPriceForGraph));
     ctx.lineTo(timeToX(endTime), priceToY(prediction.targetPrice));
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw current price point
+    // Draw current price point with responsive size
+    const pointRadius = deviceType === 'mobile' ? 3 : 4;
     ctx.beginPath();
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = colors.historical;
     // Use the same 'now' value so the historical and prediction join smoothly
-    ctx.arc(timeToX(now), priceToY(nowPriceForGraph), 4, 0, Math.PI * 2);
+    ctx.arc(timeToX(now), priceToY(nowPriceForGraph), pointRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw target price point
+    // Draw target price point with responsive size
     ctx.beginPath();
-    ctx.fillStyle = prediction.trend === 'up' ? '#22c55e' : prediction.trend === 'down' ? '#ef4444' : '#3b82f6';
-    ctx.arc(timeToX(endTime), priceToY(prediction.targetPrice), 4, 0, Math.PI * 2);
+    ctx.fillStyle = prediction.trend === 'up' ? colors.upTrend : prediction.trend === 'down' ? colors.downTrend : colors.stable;
+    ctx.arc(timeToX(endTime), priceToY(prediction.targetPrice), pointRadius, 0, Math.PI * 2);
     ctx.fill();
 
-  }, [prediction, historicalData, selectedTimeFrame, currency]);
+    // Draw vertical "Now" marker with timestamp label
+    const nowX = timeToX(now);
+    const nowMarkerColor = colors.foreground;
+    
+    // Draw vertical line
+    ctx.beginPath();
+    ctx.strokeStyle = nowMarkerColor;
+    ctx.lineWidth = deviceType === 'mobile' ? 1 : 2;
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(nowX, adaptivePadding.top);
+    ctx.lineTo(nowX, rect.height - adaptivePadding.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-  // Helper functions
-  const formatPrice = (price: number): string => {
-    return currencySymbols[currency] + price.toFixed(6);
-  };
+    // Draw "Now" label with responsive positioning
+    const nowLabelFontSize = getElementFontSize(deviceType, 'time-labels', rect.width, rect.height);
+    ctx.font = `${nowLabelFontSize}px system-ui`;
+    ctx.fillStyle = nowMarkerColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    
+    // Position label to avoid overlap with other elements
+    const nowLabelY = adaptivePadding.top - 4;
+    ctx.fillText('Now', nowX, nowLabelY);
 
-  const formatTime = (timestamp: number): string => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
+    // Setup keyboard navigation data points
+    const dataPointsForNavigation = [
+      ...relevantData.map(point => ({
+        timestamp: point.timestamp,
+        price: point.price,
+        type: 'historical' as const
+      })),
+      {
+        timestamp: now,
+        price: nowPriceForGraph,
+        type: 'historical' as const
+      },
+      {
+        timestamp: endTime,
+        price: prediction.targetPrice,
+        type: 'prediction' as const
+      }
+    ];
+
+    if (accessibility.keyboardNavigator) {
+      accessibility.keyboardNavigator.updateDataPoints(dataPointsForNavigation);
+    }
+
+    } catch (error) {
+      console.error('Error rendering chart content:', error);
+      
+      // Graceful degradation: show error message on canvas
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = '#64748b'; // fallback text color
+      ctx.font = '14px system-ui'; // fallback font size
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(
+        'Chart rendering error. Please refresh to try again.',
+        rect.width / 2,
+        rect.height / 2
+      );
+    }
+  }, []);
+
+  // Setup debounced resize handling
+  useResizeObserver(
+    containerRef,
+    useCallback(() => {
+      renderChart();
+    }, [renderChart]),
+    {
+      debounceMs: 150,
+      maxRenderTime: 500,
+      enableMetrics: true
+    }
+  );
+
+  // Initial chart render and updates
+  useEffect(() => {
+    renderChart();
+  }, [renderChart]);
 
   const getTimeRangeMs = (timeFrame: TimeFrame): number => {
     switch (timeFrame) {
@@ -513,6 +815,71 @@ export default function PricePrediction() {
     }
   };
 
+  // Handle timeframe changes with smooth transitions
+  const handleTimeframeChange = (newTimeFrame: TimeFrame) => {
+    if (newTimeFrame === selectedTimeFrame) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      setSelectedTimeFrame(newTimeFrame);
+      accessibility.announceTimeframeChange(newTimeFrame);
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const deviceType = rect.width <= 767 ? 'mobile' : rect.width <= 1023 ? 'tablet' : 'desktop';
+
+    // Calculate transition parameters
+    const transition = calculateTimeframeTransition(
+      selectedTimeFrame,
+      newTimeFrame,
+      deviceType
+    );
+
+    // Set transition state
+    setIsTransitioning(true);
+    setPreviousTimeFrame(selectedTimeFrame);
+
+    // Announce timeframe change
+    accessibility.announceTimeframeChange(newTimeFrame, prediction?.trend);
+
+    // Apply transition with appropriate duration
+    setTimeout(() => {
+      setSelectedTimeFrame(newTimeFrame);
+      
+      // Clear transition state after animation completes
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, transition.duration);
+    }, 50); // Small delay to ensure state is set before animation starts
+  };
+
+  // Handle keyboard events for chart navigation
+  const handleChartKeyDown = useCallback((event: KeyboardEvent) => {
+    const handled = accessibility.handleKeyDown(event);
+    if (handled) {
+      event.preventDefault();
+    }
+  }, [accessibility]);
+
+  // Add keyboard event listener to canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.addEventListener('keydown', handleChartKeyDown);
+    return () => {
+      canvas.removeEventListener('keydown', handleChartKeyDown);
+    };
+  }, [handleChartKeyDown]);
+
+  // Cleanup accessibility features on unmount
+  useEffect(() => {
+    return () => {
+      accessibility.cleanup();
+    };
+  }, [accessibility]);
+
   return (
     <Card>
       <CardHeader>
@@ -522,7 +889,7 @@ export default function PricePrediction() {
         <div className="space-y-4">
           <Tabs
             value={selectedTimeFrame}
-            onValueChange={value => setSelectedTimeFrame(value as TimeFrame)}
+            onValueChange={value => handleTimeframeChange(value as TimeFrame)}
           >
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="30min">30m</TabsTrigger>
@@ -534,24 +901,50 @@ export default function PricePrediction() {
           </Tabs>
 
           {loading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex h-[300px] items-center justify-center">
+              <span className="text-4xl animate-spin">🔄</span>
             </div>
           ) : prediction ? (
             <>
-              <div className="relative aspect-[2/1] w-full">
+              <div ref={containerRef} className="relative aspect-[2/1] w-full">
+                <DescriptionElement />
                 <canvas
                   ref={canvasRef}
-                  className="w-full h-full"
+                  className={cn(
+                    "size-full transition-opacity duration-300",
+                    isTransitioning && "opacity-75"
+                  )}
+                  {...accessibility.getChartAriaAttributes()}
                 />
+                {isTransitioning && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+                    <div className="text-sm text-muted-foreground animate-pulse">
+                      Updating chart...
+                    </div>
+                  </div>
+                )}
+                {/* Performance metrics display (development only) */}
+                {process.env.NODE_ENV === 'development' && performanceMetrics.length > 0 && (
+                  <div className="absolute top-2 right-2 text-xs text-muted-foreground bg-background/80 rounded px-2 py-1">
+                    Render: {performanceMetrics[performanceMetrics.length - 1]?.renderTime.toFixed(1)}ms
+                    {performanceMetrics[performanceMetrics.length - 1]?.renderTime > 500 && (
+                      <span className="text-red-500 ml-1">⚠️</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">Current Price</div>
                   <div className="font-medium">
-                    {currencySymbols[currency]}
-                    {prediction.currentPrice.toFixed(6)}
+                    {formatPriceForSpace(prediction.currentPrice, {
+                      currency,
+                      availableWidth: 120, // Reasonable width for display
+                      fontSize: 14,
+                      maxDecimals: 6,
+                      minDecimals: 2
+                    }).text}
                   </div>
                 </div>
 
@@ -567,8 +960,13 @@ export default function PricePrediction() {
                           : 'text-blue-500'
                     )}
                   >
-                    {currencySymbols[currency]}
-                    {prediction.targetPrice.toFixed(6)}
+                    {formatPriceForSpace(prediction.targetPrice, {
+                      currency,
+                      availableWidth: 120, // Reasonable width for display
+                      fontSize: 14,
+                      maxDecimals: 6,
+                      minDecimals: 2
+                    }).text}
                   </div>
                 </div>
 
@@ -577,29 +975,29 @@ export default function PricePrediction() {
                   <div className="flex items-center gap-1">
                     {prediction.trend === 'up' ? (
                       <>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span className="text-green-500">📈</span>
                         <span className="text-green-500">Bullish</span>
                       </>
                     ) : prediction.trend === 'down' ? (
                       <>
-                        <TrendingDown className="h-4 w-4 text-red-500" />
+                        <span className="text-red-500">📉</span>
                         <span className="text-red-500">Bearish</span>
                       </>
                     ) : (
                       <>
-                        <Minus className="h-4 w-4 text-blue-500" />
+                        <span className="text-blue-500">➖</span>
                         <span className="text-blue-500">Stable</span>
                       </>
                     )}
-                    <span className="text-sm text-muted-foreground ml-1">
+                    <span className="ml-1 text-sm text-muted-foreground">
                       ({prediction.confidence}% confidence)
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-1 mt-4">
+                <div className="mt-4 space-y-1">
                   <div className="text-sm font-medium">Analysis</div>
-                  <ul className="text-sm text-muted-foreground space-y-1">
+                  <ul className="space-y-1 text-sm text-muted-foreground">
                     {prediction.reasons.map((reason, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <span className="mt-1">•</span>
@@ -613,8 +1011,8 @@ export default function PricePrediction() {
           ) : null}
 
           {error && (
-            <div className="flex items-center gap-2 text-amber-500 text-sm">
-              <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-sm text-amber-500">
+              <span>⚠️</span>
               <span>{error}</span>
             </div>
           )}

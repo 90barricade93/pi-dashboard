@@ -9,6 +9,17 @@ import globals from 'globals';
 import next from '@next/eslint-plugin-next';
 
 export default [
+  {
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      '*.min.js',
+      'coverage/**',
+      '.turbo/**'
+    ]
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

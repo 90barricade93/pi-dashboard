@@ -87,6 +87,12 @@ export default function PricePrediction() {
     enableHighContrastDetection: true
   });
 
+  // Keep a stable ref to accessibility to avoid re-creating callbacks/effects
+  const accessibilityRef = useRef(accessibility);
+  useEffect(() => {
+    accessibilityRef.current = accessibility;
+  }, [accessibility]);
+
   const { DescriptionElement } = useScreenReaderDescription(
     'price-prediction-chart',
     accessibility.altText
@@ -157,6 +163,8 @@ export default function PricePrediction() {
     };
 
     fetchPriceData();
+    // We intentionally omit 'currentPrice' and 'accessibility' to avoid re-fetch loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currency, selectedTimeFrame]);
 
   // Generate prediction based on historical data and current price
@@ -358,10 +366,10 @@ export default function PricePrediction() {
         reasons: selectedReasons
       };
 
-      accessibility.updateAltText(accessibilityData);
+      accessibilityRef.current.updateAltText(accessibilityData);
 
       // Announce data update
-      accessibility.announceDataUpdate(currentPrice, currency);
+      accessibilityRef.current.announceDataUpdate(currentPrice, currency);
 
       setLoading(false);
     };
@@ -369,80 +377,9 @@ export default function PricePrediction() {
     // Add a small delay to simulate analysis
     const timer = setTimeout(generatePrediction, 800);
     return () => clearTimeout(timer);
-  }, [currentPrice, historicalData, selectedTimeFrame]);
-
-  // Chart rendering function with performance monitoring and responsive integration
-  const renderChart = useCallback(() => {
-    if (!prediction || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size to match display size
-    const rect = canvas.getBoundingClientRect();
-    
-    // Create draw parameters for change detection
-    const drawParams = {
-      prediction,
-      historicalData,
-      selectedTimeFrame,
-      currency,
-      canvasWidth: rect.width,
-      canvasHeight: rect.height
-    };
-
-    // Check if redraw is necessary
-    if (!redrawManagerRef.current.shouldRedraw(drawParams)) {
-      return; // Skip unnecessary redraw
-    }
-
-    // Setup HiDPI canvas for crisp rendering
-    try {
-      const devicePixelRatio = window.devicePixelRatio || 1;
-      canvas.width = rect.width * devicePixelRatio;
-      canvas.height = rect.height * devicePixelRatio;
-      
-      // Scale context to match device pixel ratio
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      
-      // Set canvas CSS size to maintain layout
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
-    } catch (error) {
-      console.warn('HiDPI setup failed, using standard canvas:', error);
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-    }
-
-    // Clear canvas
-    ctx.clearRect(0, 0, rect.width, rect.height);
-
-    // Configure smooth line rendering
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.imageSmoothingEnabled = true;
-    if ('imageSmoothingQuality' in ctx) {
-      ctx.imageSmoothingQuality = 'high';
-    }
-
-    // Determine device type for performance monitoring
-    const deviceType = rect.width <= 767 ? 'mobile' : rect.width <= 1023 ? 'tablet' : 'desktop';
-    const canvasSize = { width: rect.width, height: rect.height };
-
-    // Execute chart drawing with performance monitoring
-    const metric = redrawManagerRef.current.executeDraw(
-      'chart-render',
-      () => {
-        renderChartContent(ctx, rect, prediction, historicalData, selectedTimeFrame, currency);
-      },
-      deviceType,
-      canvasSize
-    );
-
-    // Update performance metrics state
-    setPerformanceMetrics(prev => [...prev.slice(-9), metric]); // Keep last 10 metrics
-  }, [prediction, historicalData, selectedTimeFrame, currency]);
+  // Intentionally exclude 'prediction' and 'accessibility' to avoid loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPrice, historicalData, selectedTimeFrame, currency]);
 
   // Separate function for the actual chart content rendering with full responsive integration
   const renderChartContent = useCallback((
@@ -455,10 +392,10 @@ export default function PricePrediction() {
   ) => {
     try {
       // Apply high contrast styles if needed
-      accessibility.applyHighContrastStyles(ctx);
+      accessibilityRef.current.applyHighContrastStyles(ctx);
       
       // Get colors based on high contrast mode
-      const colors = accessibility.highContrastColors;
+      const colors = accessibilityRef.current.highContrastColors;
 
       // Calculate responsive metrics using the responsive system
       const metrics = calculateResponsiveMetrics(rect.width, rect.height, selectedTimeFrame);
@@ -761,8 +698,8 @@ export default function PricePrediction() {
       }
     ];
 
-    if (accessibility.keyboardNavigator) {
-      accessibility.keyboardNavigator.updateDataPoints(dataPointsForNavigation);
+    if (accessibilityRef.current.keyboardNavigator) {
+      accessibilityRef.current.keyboardNavigator.updateDataPoints(dataPointsForNavigation);
     }
 
     } catch (error) {
@@ -780,7 +717,81 @@ export default function PricePrediction() {
         rect.height / 2
       );
     }
+  // We intentionally avoid depending on 'accessibility' to keep this callback stable
   }, []);
+
+  // Chart rendering function with performance monitoring and responsive integration
+  const renderChart = useCallback(() => {
+    if (!prediction || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size to match display size
+    const rect = canvas.getBoundingClientRect();
+    
+    // Create draw parameters for change detection
+    const drawParams = {
+      prediction,
+      historicalData,
+      selectedTimeFrame,
+      currency,
+      canvasWidth: rect.width,
+      canvasHeight: rect.height
+    };
+
+    // Check if redraw is necessary
+    if (!redrawManagerRef.current.shouldRedraw(drawParams)) {
+      return; // Skip unnecessary redraw
+    }
+
+    // Setup HiDPI canvas for crisp rendering
+    try {
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      canvas.width = rect.width * devicePixelRatio;
+      canvas.height = rect.height * devicePixelRatio;
+      
+      // Scale context to match device pixel ratio
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      
+      // Set canvas CSS size to maintain layout
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    } catch (error) {
+      console.warn('HiDPI setup failed, using standard canvas:', error);
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+
+    // Clear canvas
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Configure smooth line rendering
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) {
+      ctx.imageSmoothingQuality = 'high';
+    }
+
+    // Determine device type for performance monitoring
+    const deviceType = rect.width <= 767 ? 'mobile' : rect.width <= 1023 ? 'tablet' : 'desktop';
+    const canvasSize = { width: rect.width, height: rect.height };
+
+    // Execute chart drawing with performance monitoring
+    const metric = redrawManagerRef.current.executeDraw(
+      'chart-render',
+      () => {
+        renderChartContent(ctx, rect, prediction, historicalData, selectedTimeFrame, currency);
+      },
+      deviceType,
+      canvasSize
+    );
+
+    // Update performance metrics state
+    setPerformanceMetrics(prev => [...prev.slice(-9), metric]); // Keep last 10 metrics
+  }, [prediction, historicalData, selectedTimeFrame, currency, renderChartContent]);
 
   // Setup debounced resize handling
   useResizeObserver(

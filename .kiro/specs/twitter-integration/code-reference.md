@@ -10,8 +10,25 @@ Server-side service layer mediates all interactions with the Twitter/X API, enfo
 
 **File**: `lib/twitter-client.ts`
 **Purpose**: Minimal, typed wrapper around X endpoints in use
-**Props/Config**: `TWITTER_BEARER_TOKEN` env var
-**Usage**: `const client = new TwitterClient(process.env.TWITTER_BEARER_TOKEN!)`
+**Config/Options**:
+
+- `bearerToken?`: defaults to `process.env.TWITTER_BEARER_TOKEN`
+- `baseUrl?`: defaults to `https://api.twitter.com/2`
+- `fetchFn?`: defaults to `globalThis.fetch` (polyfilled in Jest)
+
+**Usage**:
+
+```ts
+// default env-based config
+const client = new TwitterClient();
+
+// explicit injection (useful in tests)
+const clientWithMocks = new TwitterClient({
+  bearerToken: 'test',
+  baseUrl: 'https://api.twitter.com/2',
+  fetchFn: mockFetch,
+});
+```
 
 ### CacheStore
 
@@ -26,12 +43,33 @@ Server-side service layer mediates all interactions with the Twitter/X API, enfo
 ### TwitterService
 
 **File**: `lib/twitter-service.ts`
-**Purpose**: Orchestrates cache-first, backoff, cooldown, stale responses
+**Purpose**: Orchestrates read-through cache, local rate limiting, and stale fallbacks on errors/429.
+
+**Behavior**:
+
+- Cache-first only until the first successful fetch.
+- After first success: attempt network each call (subject to local token-bucket limiter).
+- On limiter block or Twitter API error (including 429): return last known good data with `stale: true`, `fromCache: true`, `notice`, and `retryAt` when available (from `Retry-After` or `X-Rate-Limit-Reset`).
+- On fresh success: cache value, update last known good, slice tweets to configured count.
+
+**Config defaults**:
+
+- `cacheKey`: `twitter:pi-recent`
+- `ttlMs`: 4 hours
+- `sliceCount`: 3
 
 ### API Routes
 
-**File**: `pages/api/twitter/*.ts`
-**Purpose**: Expose internal endpoints (e.g., search counts)
+**File**: `app/api/twitter-news/route.ts`
+**Purpose**: Expose normalized recent tweets for the UI.
+
+**Normalization contract**:
+
+- Always returns an object shaped like Twitter v2 Recent Search:
+  - `data`: `Tweet[]` (array, possibly empty)
+  - `includes.users`: `User[]` (array, possibly empty)
+- Slices `data` to 3 items.
+- On cache/limiter/error paths, may include: `fromCache`, `stale`, `notice`, `retryAt`, `lastUpdated`.
 
 ## Utilities
 
@@ -49,8 +87,12 @@ Server-side service layer mediates all interactions with the Twitter/X API, enfo
 
 ### Stale-While-Revalidate with Fallback
 
-**Description**: Return cached data when external API unavailable; refresh in background
-**Implementation**: Cache read -> limiter -> fetch -> cache set -> return; on failure, return cached + `stale=true`
+**Description**: Return cached data when external API unavailable; refresh opportunistically.
+**Implementation**:
+
+- Before first success: cache-first if present.
+- Thereafter: limiter -> fetch -> cache set -> return fresh.
+- On limiter block or error/429: return last known good (or cached) with `stale: true` and `retryAt` when available.
 
 ## Common Issues
 
@@ -64,10 +106,25 @@ Server-side service layer mediates all interactions with the Twitter/X API, enfo
 
 ### Unit Tests
 
-**File**: `__tests__/twitter/*.test.ts`
-**Tests**: client auth, cache behavior, limiter, service orchestration
+**Files**:
+
+- `__tests__/twitter-service.test.ts`
+
+**Covers**:
+
+- Cache-first when cache present before first success
+- Miss then fetch stores cache and returns fresh
+- 429 returns stale with `retryAt`
+- Local limiter blocks and returns stale
+
+**Setup**:
+
+- `jest.setup.js` polyfills `globalThis.fetch` defensively for tests.
 
 ### Integration Tests
 
-**File**: `__tests__/twitter/integration/*.spec.ts`
-**Tests**: API route returns from cache when rate-limited; honors TTL and stale flag
+**Status**: TBD
+**Targets**:
+
+- `app/api/twitter-news/route.ts` returns normalized shape
+- Stale banner and `lastUpdated` propagation to UI

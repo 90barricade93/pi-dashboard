@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { RecentSearchResponse, Tweet, User } from '@/lib/twitter-client';
 
 interface NewsItem {
   id: string;
@@ -80,6 +81,13 @@ export default function NewsFeed() {
             return [...twitterNews, ...nonTwitterNews];
           });
           setNotice('Using cached Twitter data');
+          try {
+            if (typeof timestamp === 'number') {
+              setLastUpdated(new Date(timestamp));
+            }
+          } catch {
+            // ignore invalid cached timestamp
+          }
         } else {
           localStorage.removeItem(TWITTER_CACHE_KEY);
         }
@@ -90,7 +98,7 @@ export default function NewsFeed() {
   }, []);
 
   // Function to fetch news from multiple sources
-  const fetchNews = async () => {
+  const fetchNews = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -153,6 +161,7 @@ export default function NewsFeed() {
     ];
 
     let allNews = [...mockNews];
+    let serverSetLastUpdated = false;
 
     if (!twitterDisabled) {
       try {
@@ -165,7 +174,7 @@ export default function NewsFeed() {
 
         if (!twitterResponse.ok) {
           // Read as JSON if possible to extract retryAt; fallback to text
-          let errorBody: any = null;
+          let errorBody: unknown = null;
           let errorText = '';
           try {
             errorBody = await twitterResponse.json();
@@ -180,16 +189,24 @@ export default function NewsFeed() {
           // Use warn instead of error to avoid Next.js error overlay for handled states
           console.warn('Twitter API warning:', errorBody || errorText);
 
-          const baseMessage = (errorBody && (errorBody.error || errorBody.message))
-            ? (errorBody.error || errorBody.message)
-            : (errorText ? `Error: ${errorText}` : 'Could not load Twitter data.');
+          const bodyObj =
+            errorBody && typeof errorBody === 'object'
+              ? (errorBody as Record<string, unknown>)
+              : null;
+          const baseMessage = bodyObj && typeof bodyObj['error'] === 'string'
+            ? (bodyObj['error'] as string)
+            : bodyObj && typeof bodyObj['message'] === 'string'
+            ? (bodyObj['message'] as string)
+            : errorText
+            ? `Error: ${errorText}`
+            : 'Could not load Twitter data.';
 
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true);
 
             // Prefer server-provided retryAt; fallback 15 minutes; last fallback 4 hours
-            const retryAt = typeof errorBody?.retryAt === 'number'
-              ? errorBody.retryAt
+            const retryAt = bodyObj && typeof bodyObj['retryAt'] === 'number'
+              ? (bodyObj['retryAt'] as number)
               : Date.now() + 15 * 60 * 1000;
 
             localStorage.setItem(
@@ -210,28 +227,45 @@ export default function NewsFeed() {
             setNotice(baseMessage);
           }
         } else {
-          const twitterData = await twitterResponse.json();
+          const twitterData: RecentSearchResponse = await twitterResponse.json();
 
-          if (twitterData.data && twitterData.includes) {
-            // Store tweets in localStorage
-            localStorage.setItem(
-              TWITTER_CACHE_KEY,
-              JSON.stringify({
-                data: twitterData,
-                timestamp: Date.now(),
-              })
+          // Persist raw payload for debugging and quick reloads
+          localStorage.setItem(
+            TWITTER_CACHE_KEY,
+            JSON.stringify({
+              data: twitterData,
+              // Prefer server-declared lastUpdated if present
+              timestamp:
+                typeof twitterData?.lastUpdated === 'number'
+                  ? twitterData.lastUpdated
+                  : Date.now(),
+            })
+          );
+
+          // Always try to process what we received; this will yield [] if shape is missing
+          const twitterNews = processTweets(twitterData);
+          allNews = [...twitterNews, ...mockNews];
+
+          if (twitterData?.stale) {
+            setNotice(
+              twitterData?.notice || 'Showing cached Twitter data (may be stale).'
             );
+          } else if (twitterData?.fromCache) {
+            setNotice('Using cached Twitter data');
+          } else if (Array.isArray(twitterData?.data) && twitterData.data.length === 0) {
+            setNotice('No recent tweets found from @PiCoreTeam');
+          } else if (twitterNews.length === 0) {
+            // Keep a soft notice rather than an error to avoid confusing users when API omits includes
+            setNotice('No Twitter items could be parsed at this time. Showing other sources only.');
+          }
 
-            const twitterNews = processTweets(twitterData);
-            allNews = [...twitterNews, ...mockNews];
+          // Any successful (non-429) response clears local rate limit state
+          localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
 
-            if (twitterData.fromCache) {
-              setNotice('Using cached Twitter data');
-            }
-
-            localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
-          } else {
-            setNotice('Twitter data format is unexpected. Showing other news sources only.');
+          // Use server-provided lastUpdated when available
+          if (typeof twitterData?.lastUpdated === 'number') {
+            setLastUpdated(new Date(twitterData.lastUpdated));
+            serverSetLastUpdated = true;
           }
         }
       } catch (error) {
@@ -247,12 +281,14 @@ export default function NewsFeed() {
     allNews.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     setNews(allNews);
-    setLastUpdated(new Date());
+    if (!serverSetLastUpdated) {
+      setLastUpdated(new Date());
+    }
     setLoading(false);
-  };
+  }, [twitterDisabled, notice]);
 
   // Process tweets from the X API response
-  const processTweets = (twitterData: any): NewsItem[] => {
+  const processTweets = (twitterData: RecentSearchResponse): NewsItem[] => {
     const twitterNews: NewsItem[] = [];
 
     if (!twitterData.data || !twitterData.includes?.users) {
@@ -260,13 +296,19 @@ export default function NewsFeed() {
     }
 
     // Create a map of user IDs to user objects
-    const usersMap = twitterData.includes.users.reduce((acc: Record<string, any>, user: any) => {
-      acc[user.id] = user;
-      return acc;
-    }, {});
+    const usersMap = twitterData.includes.users.reduce(
+      (acc: Record<string, User>, user: User) => {
+        if (user && typeof user.id === 'string') {
+          acc[user.id] = user;
+        }
+        return acc;
+      },
+      {} as Record<string, User>
+    );
 
     // Process each tweet
-    twitterData.data.forEach((tweet: any) => {
+    twitterData.data.forEach((tweet: Tweet) => {
+      if (!tweet.author_id) return;
       const author = usersMap[tweet.author_id];
       if (!author) return;
 
@@ -277,24 +319,29 @@ export default function NewsFeed() {
       const cleanText = tweet.text;
 
       // Create news item
+      const pm = tweet.public_metrics;
+      const metrics: NewsItem['metrics'] | undefined = pm
+        ? {
+            ...(pm.like_count !== undefined ? { likes: pm.like_count } : {}),
+            ...(pm.retweet_count !== undefined ? { retweets: pm.retweet_count } : {}),
+            ...(pm.reply_count !== undefined ? { replies: pm.reply_count } : {}),
+          }
+        : undefined;
+
       twitterNews.push({
         id: tweet.id,
         title: `${author.name} (@${author.username})`,
         summary: cleanText,
         source: 'X (Twitter)',
         url: tweetUrl,
-        publishedAt: tweet.created_at,
+        publishedAt: tweet.created_at ?? new Date().toISOString(),
         category: 'twitter',
         author: {
           name: author.name,
-          username: author.username,
-          profileImageUrl: author.profile_image_url,
+          ...(author.username ? { username: author.username } : {}),
+          ...(author.profile_image_url ? { profileImageUrl: author.profile_image_url } : {}),
         },
-        metrics: {
-          likes: tweet.public_metrics?.like_count,
-          retweets: tweet.public_metrics?.retweet_count,
-          replies: tweet.public_metrics?.reply_count,
-        },
+        ...(metrics ? { metrics } : {}),
       });
     });
 
@@ -310,7 +357,7 @@ export default function NewsFeed() {
 
     // Clean up interval on component unmount
     return () => clearInterval(interval);
-  }, [twitterDisabled]);
+  }, [twitterDisabled, fetchNews]);
 
   // Function to manually retry Twitter integration
   const handleRetryTwitter = () => {
@@ -411,7 +458,7 @@ export default function NewsFeed() {
         {activeTab === 'twitter' && !twitterDisabled && (
           <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
             <Twitter className="size-4" />
-            <span>Showing official tweets from @PiNetwork</span>
+            <span>Showing official tweets from @PiCoreTeam</span>
           </div>
         )}
 

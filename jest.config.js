@@ -30,5 +30,12 @@ const customJestConfig = {
   },
 };
 
+// Allow disabling coverage locally to focus on red/green test runs
+if (process.env.JEST_DISABLE_COVERAGE === '1') {
+  customJestConfig.collectCoverage = false;
+  delete customJestConfig.coverageThreshold;
+  delete customJestConfig.collectCoverageFrom;
+}
+
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
 export default createJestConfig(customJestConfig);

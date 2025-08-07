@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.25% </span>
+                <span class="strong">5.1% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/96</span>
+                <span class='fraction'>5/98</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/32</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">4% </span>
+                <span class="strong">3.84% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/25</span>
+                <span class='fraction'>1/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.66% </span>
+                <span class="strong">5.49% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/90</span>
+                <span class='fraction'>5/91</span>
             </div>
         
             
@@ -359,7 +359,11 @@
 <a name='L294'></a><a href='#L294'>294</a>
 <a name='L295'></a><a href='#L295'>295</a>
 <a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -419,24 +423,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -452,10 +452,18 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -617,7 +625,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -661,13 +669,13 @@
 &nbsp;
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  ChartAccessibilityData,
+  type ChartAccessibilityData,
   generateChartAltText,
   generateLiveAnnouncement,
   ChartKeyboardNavigator,
   HighContrastManager,
   LiveRegionManager,
-  AccessibilityOptions
+  type AccessibilityOptions
 } from '@/lib/chart-accessibility';
 &nbsp;
 interface UseChartAccessibilityOptions {
@@ -713,6 +721,7 @@ interface ChartAccessibilityHook {
   
   // Cleanup
   cleanup: () =&gt; void;
+  setupKeyboardNavigation: (dataPoints: Array&lt;{ timestamp: number; price: number; type: 'historical' | 'prediction' }&gt;) =&gt; void;
 }
 &nbsp;
 export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useChartAccessibility(</span></span>
@@ -743,17 +752,20 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 <span class="cstat-no" title="statement not covered" >      liveRegionManagerRef.current = new LiveRegionManager();</span>
     }
 &nbsp;
+    let unsubscribe: (() =&gt; void) | undefined;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (enableHighContrastDetection &amp;&amp; !highContrastManagerRef.current) {</span>
 <span class="cstat-no" title="statement not covered" >      highContrastManagerRef.current = new HighContrastManager();</span>
 <span class="cstat-no" title="statement not covered" >      setIsHighContrastMode(highContrastManagerRef.current.isHighContrastMode());</span>
       
       // Subscribe to high contrast changes
-      const unsubscribe = <span class="cstat-no" title="statement not covered" >highContrastManagerRef.current.subscribe(<span class="fstat-no" title="function not covered" >(i</span>sHighContrast) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >      unsubscribe = highContrastManagerRef.current.subscribe(<span class="fstat-no" title="function not covered" >(i</span>sHighContrast) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        setIsHighContrastMode(isHighContrast);</span>
       });
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      return unsubscribe;</span>
     }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    return <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (unsubscribe) <span class="cstat-no" title="statement not covered" >unsubscribe();</span></span>
+    };
   }, [enableLiveRegions, enableHighContrastDetection]);
 &nbsp;
   // Update alt text
@@ -769,7 +781,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!enableKeyboardNavigation) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
     const navigator = <span class="cstat-no" title="statement not covered" >new ChartKeyboardNavigator(dataPoints, {</span>
-      onDataPointFocus: <span class="fstat-no" title="function not covered" >(i</span>ndex, dataPoint) =&gt; {
+      onDataPointFocus: <span class="fstat-no" title="function not covered" >(i</span>ndex, _dataPoint) =&gt; {
 <span class="cstat-no" title="statement not covered" >        setCurrentDataPointIndex(index);</span>
       },
       onAnnouncement: <span class="fstat-no" title="function not covered" >(m</span>essage) =&gt; {
@@ -848,9 +860,9 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 <span class="cstat-no" title="statement not covered" >    return {</span>
       role: 'img',
       'aria-label': altText || 'Price prediction chart',
-      'aria-describedby': altText ? descriptionElementIdRef.current : undefined,
+      ...(altText ? { 'aria-describedby': descriptionElementIdRef.current } : {}),
       tabIndex: 0
-    };
+    } as { role: string; 'aria-label': string; 'aria-describedby'?: string; tabIndex: number };
   }, [altText]);
 &nbsp;
   // Cleanup function
@@ -913,7 +925,7 @@ export function useScreenReaderDescription(
 /**
  * Hook for managing focus indicators on canvas elements
  */
-export function <span class="fstat-no" title="function not covered" >useFocusIndicator(</span>
+export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useFocusIndicator(</span></span>
   canvasRef: React.RefObject&lt;HTMLCanvasElement&gt;,
   isHighContrastMode: boolean
 ) {
@@ -958,7 +970,7 @@ export function <span class="fstat-no" title="function not covered" >useFocusInd
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T12:06:11.913Z
+                at 2025-08-07T17:47:11.548Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

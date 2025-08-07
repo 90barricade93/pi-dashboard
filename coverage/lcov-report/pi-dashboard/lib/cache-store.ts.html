@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.85% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/3</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -124,31 +124,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,31 +170,31 @@ export type CacheStore = {
   set&lt;T&gt;(key: string, value: T, ttlMs: number): Promise&lt;void&gt;;
 };
 &nbsp;
-export class InMemoryCacheStore implements CacheStore {
-  private store = new Map&lt;
+export class <span class="cstat-no" title="statement not covered" >InMemoryCacheStore implements CacheStore {</span>
+  private <span class="cstat-no" title="statement not covered" >store = new Map&lt;</span>
     string,
     { value: unknown; expiresAt: number; lastUpdated: number }
   &gt;();
 &nbsp;
-  constructor(private readonly nowFn: () =&gt; number = <span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >D</span>ate.now())</span></span> {}
+<span class="fstat-no" title="function not covered" >  constructor(p</span>rivate readonly <span class="cstat-no" title="statement not covered" >nowFn: () =&gt; number = <span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >(</span>) =&gt; <span class="cstat-no" title="statement not covered" >D</span>ate.now())</span></span> {}
 &nbsp;
-  async get&lt;T&gt;(key: string): Promise&lt;CacheGetResult&lt;T&gt;&gt; {
-    const entry = this.store.get(key);
-    const now = this.nowFn();
-    if (!entry) {
-      return { value: null, lastUpdated: null };
+<span class="fstat-no" title="function not covered" >  async g</span>et&lt;T&gt;(key: string): Promise&lt;CacheGetResult&lt;T&gt;&gt; {
+    const entry = <span class="cstat-no" title="statement not covered" >this.store.get(key);</span>
+    const now = <span class="cstat-no" title="statement not covered" >this.nowFn();</span>
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!entry) {</span>
+<span class="cstat-no" title="statement not covered" >      return { value: null, lastUpdated: null };</span>
     }
-    if (entry.expiresAt &lt;= now) {
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (entry.expiresAt &lt;= now) {</span>
       // Expired: delete and return miss
-      this.store.delete(key);
-      return { value: null, lastUpdated: entry.lastUpdated };
+<span class="cstat-no" title="statement not covered" >      this.store.delete(key);</span>
+<span class="cstat-no" title="statement not covered" >      return { value: null, lastUpdated: entry.lastUpdated };</span>
     }
-    return { value: entry.value as T, lastUpdated: entry.lastUpdated };
+<span class="cstat-no" title="statement not covered" >    return { value: entry.value as T, lastUpdated: entry.lastUpdated };</span>
   }
 &nbsp;
-  async set&lt;T&gt;(key: string, value: T, ttlMs: number): Promise&lt;void&gt; {
-    const now = this.nowFn();
-    this.store.set(key, {
+<span class="fstat-no" title="function not covered" >  async s</span>et&lt;T&gt;(key: string, value: T, ttlMs: number): Promise&lt;void&gt; {
+    const now = <span class="cstat-no" title="statement not covered" >this.nowFn();</span>
+<span class="cstat-no" title="statement not covered" >    this.store.set(key, {</span>
       value,
       expiresAt: now + ttlMs,
       lastUpdated: now,
@@ -208,7 +208,7 @@ export class InMemoryCacheStore implements CacheStore {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T17:47:11.548Z
+                at 2025-08-07T17:51:02.393Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

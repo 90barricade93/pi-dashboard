@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.92% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/26</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.6% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>19/23</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -146,37 +146,37 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -208,37 +208,37 @@ export type TokenBucketOptions = {
   nowFn?: () =&gt; number; // epoch ms
 };
 &nbsp;
-export class InMemoryTokenBucket implements RateLimiter {
+export class <span class="cstat-no" title="statement not covered" >InMemoryTokenBucket implements RateLimiter {</span>
   private tokens: number;
   private lastRefillMs: number;
   private readonly now: () =&gt; number;
 &nbsp;
-  constructor(private readonly opts: TokenBucketOptions) {
-    this.tokens = opts.capacity;
-    this.now = opts.nowFn ?? (<span class="fstat-no" title="function not covered" ><span class="branch-1 cbranch-no" title="branch not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >D</span>ate.now()</span></span>);
-    this.lastRefillMs = this.now();
+<span class="fstat-no" title="function not covered" >  constructor(p</span>rivate readonly <span class="cstat-no" title="statement not covered" >opts: TokenBucketOptions)</span> {
+<span class="cstat-no" title="statement not covered" >    this.tokens = opts.capacity;</span>
+<span class="cstat-no" title="statement not covered" >    this.now = opts.nowFn ?? (<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >D</span>ate.now()</span>);</span>
+<span class="cstat-no" title="statement not covered" >    this.lastRefillMs = this.now();</span>
   }
 &nbsp;
-  private refill(): void {
-    const now = this.now();
-    const elapsedSec = (now - this.lastRefillMs) / 1000;
-    if (elapsedSec &lt;= 0) return;
-    const refillAmount = elapsedSec * this.opts.refillRatePerSec;
-    this.tokens = Math.min(this.opts.capacity, this.tokens + refillAmount);
-    this.lastRefillMs = now;
+  private <span class="fstat-no" title="function not covered" >refill(): void {</span>
+    const now = <span class="cstat-no" title="statement not covered" >this.now();</span>
+    const elapsedSec = <span class="cstat-no" title="statement not covered" >(now - this.lastRefillMs) / 1000;</span>
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (elapsedSec &lt;= 0) <span class="cstat-no" title="statement not covered" >return;</span></span>
+    const refillAmount = <span class="cstat-no" title="statement not covered" >elapsedSec * this.opts.refillRatePerSec;</span>
+<span class="cstat-no" title="statement not covered" >    this.tokens = Math.min(this.opts.capacity, this.tokens + refillAmount);</span>
+<span class="cstat-no" title="statement not covered" >    this.lastRefillMs = now;</span>
   }
 &nbsp;
-  async take(tokens = 1): Promise&lt;RateLimiterResult&gt; {
-    this.refill();
-    if (this.tokens &gt;= tokens) {
-      this.tokens -= tokens;
-      return { allowed: true, tokensRemaining: this.tokens };
+<span class="fstat-no" title="function not covered" >  async t</span>ake(tokens = <span class="branch-0 cbranch-no" title="branch not covered" >1)</span>: Promise&lt;RateLimiterResult&gt; {
+<span class="cstat-no" title="statement not covered" >    this.refill();</span>
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (this.tokens &gt;= tokens) {</span>
+<span class="cstat-no" title="statement not covered" >      this.tokens -= tokens;</span>
+<span class="cstat-no" title="statement not covered" >      return { allowed: true, tokensRemaining: this.tokens };</span>
     }
     // compute cooldown
-    const deficit = tokens - this.tokens;
-    const secondsUntil = deficit / this.opts.refillRatePerSec;
-    const cooldownUntil = this.now() + Math.ceil(secondsUntil * 1000);
-    return { allowed: false, tokensRemaining: this.tokens, cooldownUntil };
+    const deficit = <span class="cstat-no" title="statement not covered" >tokens - this.tokens;</span>
+    const secondsUntil = <span class="cstat-no" title="statement not covered" >deficit / this.opts.refillRatePerSec;</span>
+    const cooldownUntil = <span class="cstat-no" title="statement not covered" >this.now() + Math.ceil(secondsUntil * 1000);</span>
+<span class="cstat-no" title="statement not covered" >    return { allowed: false, tokensRemaining: this.tokens, cooldownUntil };</span>
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  cooldownUntil(): number | undefined {</span>
@@ -256,7 +256,7 @@ export class InMemoryTokenBucket implements RateLimiter {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T17:47:11.548Z
+                at 2025-08-07T17:51:02.393Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

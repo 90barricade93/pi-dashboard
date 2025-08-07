@@ -125,8 +125,8 @@ export default function PiCalculator() {
             ))}
           </div>
 
-          <div className="pt-4 border-t">
-            <div className="text-sm text-muted-foreground mb-1">Estimated Value</div>
+          <div className="border-t pt-4">
+            <div className="mb-1 text-sm text-muted-foreground">Estimated Value</div>
             <div className="text-3xl font-bold">
               {loading ? (
                 <span className="text-muted-foreground">Loading...</span>
@@ -137,16 +137,16 @@ export default function PiCalculator() {
                 </>
               )}
             </div>
-            {error && <div className="text-amber-500 text-xs mt-1">{error}</div>}
+            {error && <div className="mt-1 text-xs text-amber-500">{error}</div>}
           </div>
 
-          <div className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center">
+          <div className="mt-2 flex items-center justify-center text-center text-xs text-muted-foreground">
             <span>Powered by</span>
             <a
               href="https://www.okx.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center ml-1 hover:text-foreground transition-colors"
+              className="ml-1 flex items-center transition-colors hover:text-foreground"
             >
               OKX
               <svg
@@ -157,7 +157,7 @@ export default function PiCalculator() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-3 w-3 ml-1"
+                className="ml-1 size-3"
               >
                 <path d="M7 17L17 7"></path>
                 <path d="M7 7h10v10"></path>

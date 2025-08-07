@@ -29,11 +29,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen flex-col">
-            <div className="flex items-center md:hidden px-4 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
               <MobileNav />
-              <div className="flex-1 flex justify-center">
-                <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-                  <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+              <div className="flex flex-1 justify-center">
+                <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+                  <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                     π
                   </div>
                 </div>
@@ -50,5 +50,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-import './globals.css';

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, AlertCircle, Twitter, Info, CheckIcon as CheckVerified } from 'lucide-react';
+import { RefreshCw, AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -31,9 +31,6 @@ interface NewsItem {
 
 // News refresh interval in milliseconds (4 hours)
 const NEWS_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
-
-// Rate limit reset period (4 hours in milliseconds)
-const RATE_LIMIT_RESET = 4 * 60 * 60 * 1000;
 
 // Local storage keys
 const TWITTER_CACHE_KEY = 'twitter-cache';
@@ -167,38 +164,50 @@ export default function NewsFeed() {
         });
 
         if (!twitterResponse.ok) {
-          const errorText = await twitterResponse.text();
-          console.error('Twitter API error:', errorText);
-
-          let errorMessage = 'Could not load Twitter data.';
-          let errorData;
-
+          // Read as JSON if possible to extract retryAt; fallback to text
+          let errorBody: any = null;
+          let errorText = '';
           try {
-            errorData = JSON.parse(errorText);
-            if (errorData.error) {
-              errorMessage = errorData.error;
+            errorBody = await twitterResponse.json();
+          } catch {
+            try {
+              errorText = await twitterResponse.text();
+            } catch {
+              // Ignore text parsing error
             }
-          } catch (e) {
-            errorMessage = `Error: ${errorText}`;
           }
+
+          // Use warn instead of error to avoid Next.js error overlay for handled states
+          console.warn('Twitter API warning:', errorBody || errorText);
+
+          const baseMessage = (errorBody && (errorBody.error || errorBody.message))
+            ? (errorBody.error || errorBody.message)
+            : (errorText ? `Error: ${errorText}` : 'Could not load Twitter data.');
 
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true);
-            const resetTime = Date.now() + RATE_LIMIT_RESET;
+
+            // Prefer server-provided retryAt; fallback 15 minutes; last fallback 4 hours
+            const retryAt = typeof errorBody?.retryAt === 'number'
+              ? errorBody.retryAt
+              : Date.now() + 15 * 60 * 1000;
+
             localStorage.setItem(
               TWITTER_RATE_LIMIT_KEY,
-              JSON.stringify({
-                timestamp: Date.now(),
-                resetTime: resetTime,
-              })
+              JSON.stringify({ timestamp: Date.now(), resetTime: retryAt })
             );
 
-            const resetMinutes = Math.ceil(RATE_LIMIT_RESET / (60 * 1000));
-            setNotice(
-              `Twitter API is rate limited. Will try again in approximately ${resetMinutes} minutes.`
-            );
+            const mins = Math.max(1, Math.ceil((retryAt - Date.now()) / (60 * 1000)));
+            setNotice(`Twitter API is rate limited. Will try again in approximately ${mins} minutes.`);
+
+            // Early return to avoid throwing handled 429s further
+            allNews = [...mockNews];
+            setNews(allNews);
+            setLastUpdated(new Date());
+            setLoading(false);
+            return;
           } else {
-            setNotice(errorMessage);
+            setNotice(baseMessage);
           }
         } else {
           const twitterData = await twitterResponse.json();
@@ -226,7 +235,8 @@ export default function NewsFeed() {
           }
         }
       } catch (error) {
-        console.error('Error fetching Twitter data:', error);
+        // Non-fatal: log as warning and keep the rest of the feed working
+        console.warn('Error fetching Twitter data:', error);
         setNotice(
           `Error loading Twitter data: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -342,7 +352,7 @@ export default function NewsFeed() {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle>Pi News</CardTitle>
+        <CardTitle>News</CardTitle>
         <div className="w-full max-w-[300px]">
           <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5">
@@ -366,14 +376,14 @@ export default function NewsFeed() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             {lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
           </div>
           <div className="flex gap-2">
             {twitterDisabled && (
               <Button variant="outline" size="sm" onClick={handleRetryTwitter}>
-                <Twitter className="h-4 w-4 mr-1 text-blue-400" />
+                <Twitter className="mr-1 size-4 text-blue-400" />
                 Retry X
               </Button>
             )}
@@ -385,22 +395,22 @@ export default function NewsFeed() {
         </div>
 
         {notice && (
-          <div className="flex items-center gap-2 text-blue-500 text-sm mb-4 p-3 bg-blue-50 rounded-md">
-            <Info className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
+            <Info className="size-4" />
             <span>{notice}</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 text-amber-500 text-sm mb-4 p-3 bg-amber-50 rounded-md">
-            <AlertCircle className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-500">
+            <AlertCircle className="size-4" />
             <span>{error}</span>
           </div>
         )}
 
         {activeTab === 'twitter' && !twitterDisabled && (
-          <div className="flex items-center gap-2 text-blue-500 text-sm mb-4 p-3 bg-blue-50 rounded-md">
-            <Twitter className="h-4 w-4" />
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
+            <Twitter className="size-4" />
             <span>Showing official tweets from @PiNetwork</span>
           </div>
         )}
@@ -413,7 +423,7 @@ export default function NewsFeed() {
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-1/2" />
-                <div className="flex justify-between items-center pt-2">
+                <div className="flex items-center justify-between pt-2">
                   <Skeleton className="h-3 w-20" />
                   <Skeleton className="h-3 w-24" />
                 </div>
@@ -427,11 +437,11 @@ export default function NewsFeed() {
                 <div key={item.id} className="border-b pb-4 last:border-0">
                   <div className="flex gap-3">
                     {item.imageUrl && (
-                      <div className="hidden sm:block flex-shrink-0">
+                      <div className="hidden shrink-0 sm:block">
                         <img
                           src={item.imageUrl || '/placeholder.svg'}
                           alt=""
-                          className="w-[120px] h-[80px] object-cover rounded-md"
+                          className="h-[80px] w-[120px] rounded-md object-cover"
                           loading="lazy"
                         />
                       </div>
@@ -440,23 +450,23 @@ export default function NewsFeed() {
                       <div className="flex items-center gap-2">
                         {item.category === 'twitter' && (
                           <div className="flex items-center">
-                            <Twitter className="h-4 w-4 text-blue-400" />
-                            <CheckVerified className="h-3 w-3 text-blue-500 ml-1" />
+                            <Twitter className="size-4 text-blue-400" />
+                            <CheckVerified className="ml-1 size-3 text-blue-500" />
                           </div>
                         )}
                         <a
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-lg hover:text-blue-600 transition-colors"
+                          className="text-lg font-medium transition-colors hover:text-blue-600"
                         >
                           {item.title}
                         </a>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{item.summary}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
 
                       {item.category === 'twitter' && item.metrics && (
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
                           {item.metrics.likes !== undefined && (
                             <span>{item.metrics.likes} likes</span>
                           )}
@@ -466,14 +476,14 @@ export default function NewsFeed() {
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center mt-2 text-xs">
+                      <div className="mt-2 flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">
                           {item.category === 'twitter' && item.author?.profileImageUrl ? (
                             <div className="flex items-center gap-1">
                               <img
                                 src={item.author.profileImageUrl || '/placeholder.svg'}
                                 alt={item.author.name}
-                                className="w-4 h-4 rounded-full"
+                                className="size-4 rounded-full"
                               />
                               <span>{item.source}</span>
                             </div>
@@ -490,14 +500,14 @@ export default function NewsFeed() {
                 </div>
               ))
             ) : (
-              <p className="text-center py-8 text-muted-foreground">
+              <p className="py-8 text-center text-muted-foreground">
                 No news available in this category.
               </p>
             )}
           </div>
         )}
 
-        <div className="mt-4 pt-3 border-t text-xs text-center text-muted-foreground">
+        <div className="mt-4 border-t pt-3 text-center text-xs text-muted-foreground">
           <p>
             This news feed aggregates content from Pi Network official sources, community forums,
             and official Pi Network tweets.

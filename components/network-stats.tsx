@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, Users, Globe, Zap } from 'lucide-react';
+// Removed lucide-react import
 
-interface NetworkStats {
+interface NetworkStatsData {
   activeUsers: number;
   totalNodes: number;
   blockHeight: number;
@@ -14,7 +14,7 @@ interface NetworkStats {
 }
 
 export default function NetworkStats() {
-  const [stats, setStats] = useState<NetworkStats | null>(null);
+  const [stats, setStats] = useState<NetworkStatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Simulate fetching network stats
@@ -27,7 +27,7 @@ export default function NetworkStats() {
         await new Promise(resolve => setTimeout(resolve, 1200));
 
         // Mock data - replace with actual API call
-        const mockStats: NetworkStats = {
+        const mockStats: NetworkStatsData = {
           activeUsers: 35000000 + Math.floor(Math.random() * 500000),
           totalNodes: 12000 + Math.floor(Math.random() * 500),
           blockHeight: 1250000 + Math.floor(Math.random() * 1000),
@@ -66,15 +66,15 @@ export default function NetworkStats() {
       </CardHeader>
       <CardContent>
         {loading || !stats ? (
-          <div className="flex items-center justify-center h-[200px]">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex h-[200px] items-center justify-center">
+            <span className="animate-spin text-4xl">🔄</span>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">👥</span>
                   <span className="text-sm font-medium">Active Users</span>
                 </div>
                 <span className="text-2xl font-bold">{formatNumber(stats.activeUsers)}</span>
@@ -82,7 +82,7 @@ export default function NetworkStats() {
 
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">🌐</span>
                   <span className="text-sm font-medium">Total Nodes</span>
                 </div>
                 <span className="text-2xl font-bold">{formatNumber(stats.totalNodes)}</span>
@@ -90,7 +90,7 @@ export default function NetworkStats() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-sm">Block Height</span>
                 <span className="text-sm font-medium">{stats.blockHeight.toLocaleString()}</span>
               </div>
@@ -98,9 +98,9 @@ export default function NetworkStats() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
+                  <span className="text-xs text-muted-foreground">⚡</span>
                   <span className="text-sm">TPS</span>
                 </div>
                 <span className="text-sm font-medium">{stats.transactionsPerSecond}</span>
@@ -109,7 +109,7 @@ export default function NetworkStats() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-sm">Consensus Rate</span>
                 <span className="text-sm font-medium">{stats.consensusRate.toFixed(1)}%</span>
               </div>

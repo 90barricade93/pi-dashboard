@@ -57,10 +57,11 @@ export const fetchPiPrice = async (
  */
 export const fetchPiHistoricalData = async (
   currency: string,
-  days = 7
+  days = 7,
+  bar?: '1m' | '3m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'
 ): Promise<{ data: any; error: string | null }> => {
   try {
-    return await okxClient.fetchHistoricalData(currency, days);
+    return await okxClient.fetchHistoricalData(currency, days, bar);
   } catch (error) {
     console.error('Error fetching historical data:', error);
     return {

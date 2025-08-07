@@ -9,8 +9,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import * as React from 'react';
+
+// Local bell icon to avoid dependency/version issues
+function BellIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
+      <path d="M13.73 21a2 2 0 01-3.46 0" />
+    </svg>
+  );
+}
 
 export default function Header() {
   return (
@@ -19,12 +38,12 @@ export default function Header() {
         {/* Logo and brand */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>
             </div>
-            <span className="font-bold text-xl">90barricade93 Pi Dashboard</span>
+            <span className="text-xl font-bold">90barricade93 Pi Dashboard</span>
           </Link>
         </div>
 
@@ -34,8 +53,8 @@ export default function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
+                <BellIcon className="size-5" />
+                <span className="absolute right-1 top-1 size-2 rounded-full bg-red-500"></span>
                 <span className="sr-only">Notifications</span>
               </Button>
             </DropdownMenuTrigger>

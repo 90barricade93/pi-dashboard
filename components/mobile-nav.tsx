@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import * as React from 'react';
 import { ThemeToggleSwitch } from '@/components/theme-toggle';
 
 export function MobileNav() {
@@ -14,7 +14,7 @@ export function MobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
+          <MenuIcon className="size-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
@@ -24,15 +24,15 @@ export function MobileNav() {
         </SheetDescription>
         <div className="flex items-center justify-between border-b pb-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-              <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>
             </div>
-            <span className="font-bold text-xl">Pi Dashboard</span>
+            <span className="text-xl font-bold">Pi Dashboard</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-            <X className="h-5 w-5" />
+            <CloseIcon className="size-5" />
             <span className="sr-only">Close menu</span>
           </Button>
         </div>
@@ -75,5 +75,43 @@ export function MobileNav() {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+// Local icons to avoid lucide-react named export issues across versions
+function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function CloseIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   );
 }

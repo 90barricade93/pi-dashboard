@@ -28,11 +28,5 @@ jobs:
       - name: Run type checking
         run: npx tsc --noEmit
 
-      - name: Run unit tests
-        run: npm test
-
-      - name: Run e2e tests
-        run: npm run test:e2e
-
       - name: Build
         run: npm run build

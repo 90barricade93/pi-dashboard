@@ -10,14 +10,14 @@ export default function Footer() {
           {/* Logo and about */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
-                <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+              <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+                <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                   π
                 </div>
               </div>
-              <span className="font-bold text-xl">Pi Dashboard</span>
+              <span className="text-xl font-bold">Pi Dashboard</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               A comprehensive dashboard for tracking Pi cryptocurrency, network statistics, and
               ecosystem news.
             </p>
@@ -25,12 +25,12 @@ export default function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-medium mb-3">Resources</h3>
+            <h3 className="mb-3 text-sm font-medium">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/developers"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Developers
                 </Link>
@@ -38,16 +38,16 @@ export default function Footer() {
               <li>
                 <Link
                   href="/whitepaper"
-                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Pi Whitepaper
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="size-3" />
                 </Link>
               </li>
               <li>
                 <Link
                   href="/roadmap"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Roadmap
                 </Link>
@@ -57,15 +57,15 @@ export default function Footer() {
 
           {/* Connect */}
           <div>
-            <h3 className="text-sm font-medium mb-3">Connect</h3>
-            <div className="flex gap-2 mb-4">
+            <h3 className="mb-3 text-sm font-medium">Connect</h3>
+            <div className="mb-4 flex gap-2">
               <Button variant="outline" size="icon" asChild>
                 <Link
                   href="https://twitter.com/Vries_de_R"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Twitter className="h-4 w-4" />
+                  <Twitter className="size-4" />
                   <span className="sr-only">Twitter</span>
                 </Link>
               </Button>
@@ -83,7 +83,7 @@ export default function Footer() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-4 w-4"
+                    className="size-4"
                   >
                     <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
                     <rect x="2" y="9" width="4" height="12"></rect>
@@ -93,10 +93,10 @@ export default function Footer() {
                 </Link>
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">Created by Raymond de Vries</p>
+            <p className="mb-4 text-xs text-muted-foreground">Created by Raymond de Vries</p>
             <div className="text-sm text-muted-foreground">
               <p>Subscribe to our newsletter for updates</p>
-              <div className="flex gap-2 mt-2">
+              <div className="mt-2 flex gap-2">
                 <input
                   type="email"
                   placeholder="Your email"
@@ -108,24 +108,24 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t pt-6 md:flex-row">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} 90barricade93 Pi Dashboard. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">
+            <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
             </Link>
-            <Link href="/cookies" className="hover:text-foreground transition-colors">
+            <Link href="/cookies" className="transition-colors hover:text-foreground">
               Cookie Policy
             </Link>
           </div>
         </div>
 
-        <div className="mt-4 text-xs text-muted-foreground text-center">
+        <div className="mt-4 text-center text-xs text-muted-foreground">
           <p>
             Disclaimer: This dashboard is for informational purposes only and does not constitute
             financial advice. Pi Network and Pi are trademarks of their respective owners.

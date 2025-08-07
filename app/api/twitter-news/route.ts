@@ -13,22 +13,14 @@ const CACHE_DURATION = 4 * 60 * 60 * 1000;
 let isRateLimited = false;
 let rateLimitResetTime = 0;
 
-// Function to check if we should make a new API call
+// Function to check if we should make a new API call based on TTL
 function shouldFetchNewTweets() {
-  const now = new Date();
-  const lastFetchTime = tweetCache?.timestamp ? new Date(tweetCache.timestamp) : null;
+  const now = Date.now();
+  const lastFetchTime = tweetCache?.timestamp ?? 0;
 
-  // Als er geen cache is, dan moeten we fetchen
+  // If no cache or cache expired (older than TTL), fetch new tweets
   if (!lastFetchTime) return true;
-
-  // Bereken het volgende 4-uurs interval vanaf middernacht
-  const hours = now.getHours();
-  const nextFetchHour = Math.ceil(hours / 4) * 4;
-  const nextFetchDate = new Date(now);
-  nextFetchDate.setHours(nextFetchHour, 0, 0, 0);
-
-  // Als de huidige tijd voorbij het volgende fetch moment is, moeten we fetchen
-  return now.getTime() >= nextFetchDate.getTime();
+  return now - lastFetchTime >= CACHE_DURATION;
 }
 
 export async function GET() {
@@ -62,12 +54,12 @@ export async function GET() {
 
     // Check if we should fetch new tweets
     if (!shouldFetchNewTweets() && tweetCache) {
-      console.log('Using cached tweets within 4-hour window');
+      console.log('Using cached tweets within TTL window');
       return NextResponse.json({ ...tweetCache.data, fromCache: true });
     }
 
     // Get the bearer token from environment variables
-    const token = process.env.TWITTER_BEARER_TOKEN;
+    const token = process.env['TWITTER_BEARER_TOKEN'];
 
     if (!token) {
       console.error('Twitter Bearer Token is not configured');
@@ -117,21 +109,17 @@ export async function GET() {
       if (response.status === 429) {
         isRateLimited = true;
 
-        // Get reset time from response headers if available
+        // Prefer Retry-After header (seconds). Fallback to x-rate-limit-reset (epoch seconds).
+        const retryAfterHeader = response.headers.get('retry-after');
         const resetTimeHeader = response.headers.get('x-rate-limit-reset');
-        if (resetTimeHeader) {
-          rateLimitResetTime = parseInt(resetTimeHeader) * 1000; // Convert to milliseconds
+        if (retryAfterHeader && !Number.isNaN(Number(retryAfterHeader))) {
+          const retryAfterMs = Number(retryAfterHeader) * 1000;
+          rateLimitResetTime = Date.now() + retryAfterMs;
+        } else if (resetTimeHeader && !Number.isNaN(Number(resetTimeHeader))) {
+          rateLimitResetTime = parseInt(resetTimeHeader, 10) * 1000; // Convert to ms
         } else {
-          // Calculate next 4-hour interval from midnight
-          const now = new Date();
-          const hours = now.getHours();
-          const nextResetHour = Math.ceil(hours / 4) * 4;
-          const resetDate = new Date(now);
-          resetDate.setHours(nextResetHour, 0, 0, 0);
-          if (resetDate.getTime() <= now.getTime()) {
-            resetDate.setHours(resetDate.getHours() + 4);
-          }
-          rateLimitResetTime = resetDate.getTime();
+          // Conservative fallback: wait 15 minutes
+          rateLimitResetTime = Date.now() + 15 * 60 * 1000;
         }
 
         console.log(`Rate limited until ${new Date(rateLimitResetTime).toLocaleString()}`);
@@ -144,11 +132,16 @@ export async function GET() {
           ...tweetCache.data,
           fromCache: true,
           notice: 'Using cached data due to API rate limits',
+          retryAt: rateLimitResetTime,
         });
       }
 
       return NextResponse.json(
-        { error: 'Failed to fetch tweets', details: errorData },
+        {
+          error: 'Failed to fetch tweets',
+          details: errorData,
+          retryAt: response.status === 429 ? rateLimitResetTime : undefined,
+        },
         { status: response.status }
       );
     }
@@ -168,12 +161,6 @@ export async function GET() {
     if (data?.data) {
       // Alleen de eerste 3 tweets gebruiken
       data.data = data.data.slice(0, 3);
-      
-      // Transform data to match expected format
-      const prices = data.data.map((candle: any) => [
-        parseInt(candle[0]), // timestamp
-        parseFloat(candle[4]) // closing price
-      ]);
     }
 
     return NextResponse.json(data);

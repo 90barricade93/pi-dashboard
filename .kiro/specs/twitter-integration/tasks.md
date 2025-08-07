@@ -60,7 +60,7 @@ NewsFeed.useEffect @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\co
 **Testing**: Playwright optional
 **Files to Modify**: `pages/api/twitter/*.ts`, components
 
-## Task T6: Observability & alerts [ ]  
+## Task T6: Observability & alerts [x]  
 
 **Requirement**: R5
 **Description**: Structured logs, metrics counters for rate-limit hits, alert threshold config.

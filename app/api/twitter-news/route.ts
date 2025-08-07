@@ -188,10 +188,10 @@ export async function GET() {
       );
     }
 
-    // Normalize and slice result to match UI expectations
+    // Normalize and slice result to match UI expectations (latest + previous 9)
     const normalized = normalizeResponse(data);
     if (Array.isArray(normalized.data)) {
-      normalized.data = normalized.data.slice(0, 3);
+      normalized.data = normalized.data.slice(0, 10);
     }
 
     // Update the cache with normalized data

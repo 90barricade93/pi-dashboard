@@ -1001,7 +1001,7 @@ export default function PricePrediction() {
                       </>
                     )}
                     <span className="ml-1 text-sm text-muted-foreground">
-                      ({prediction.confidence}% confidence)
+                      ({prediction.confidence.toFixed(2)}% confidence)
                     </span>
                   </div>
                 </div>

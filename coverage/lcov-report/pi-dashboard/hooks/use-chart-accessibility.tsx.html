@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.1% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/98</span>
+                <span class='fraction'>0/98</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.84% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/26</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.49% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/91</span>
+                <span class='fraction'>0/91</span>
             </div>
         
             
@@ -367,7 +367,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -376,7 +376,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -603,11 +603,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -619,7 +619,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -667,7 +667,7 @@
  * React hook for managing chart accessibility features
  */
 &nbsp;
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from <span class="cstat-no" title="statement not covered" >'react';</span>
 import {
   type ChartAccessibilityData,
   generateChartAltText,
@@ -676,7 +676,7 @@ import {
   HighContrastManager,
   LiveRegionManager,
   type AccessibilityOptions
-} from '@/lib/chart-accessibility';
+} from <span class="cstat-no" title="statement not covered" >'@/lib/chart-accessibility';</span>
 &nbsp;
 interface UseChartAccessibilityOptions {
   accessibilityOptions?: AccessibilityOptions;
@@ -903,11 +903,11 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 /**
  * Hook for managing screen reader descriptions
  */
-export function useScreenReaderDescription(
+export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useScreenReaderDescription(</span></span>
   elementId: string,
   description: string
 ): { descriptionElementId: string; DescriptionElement: React.FC } {
-  const descriptionElementId = `${elementId}-description`;
+  const descriptionElementId = <span class="cstat-no" title="statement not covered" >`${elementId}-description`;</span>
 &nbsp;
   const DescriptionElement: React.FC = () =&gt; (
     &lt;div
@@ -919,7 +919,7 @@ export function useScreenReaderDescription(
     &lt;/div&gt;
   );
 &nbsp;
-  return { descriptionElementId, DescriptionElement };
+<span class="cstat-no" title="statement not covered" >  return { descriptionElementId, DescriptionElement };</span>
 }
 &nbsp;
 /**
@@ -970,7 +970,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-07T17:47:11.548Z
+                at 2025-08-07T17:51:02.393Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

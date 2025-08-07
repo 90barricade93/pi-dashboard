@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
 import type { RecentSearchResponse, Tweet, User } from '@/lib/twitter-client';
 
 interface NewsItem {
@@ -45,6 +43,7 @@ export default function NewsFeed() {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [twitterDisabled, setTwitterDisabled] = useState(false);
+  const [rateLimitResetAt, setRateLimitResetAt] = useState<number | null>(null);
 
   // Check for stored rate limit status and cached tweets on component mount
   useEffect(() => {
@@ -57,6 +56,7 @@ export default function NewsFeed() {
 
         if (now < rateLimitInfo.resetTime) {
           setTwitterDisabled(true);
+          setRateLimitResetAt(rateLimitInfo.resetTime);
           const timeRemaining = Math.ceil((rateLimitInfo.resetTime - now) / (60 * 1000));
           setNotice(
             `Twitter API is rate limited. Will try again in approximately ${timeRemaining} minutes.`
@@ -102,7 +102,8 @@ export default function NewsFeed() {
     setLoading(true);
     setError(null);
 
-    if (!notice || !notice.includes('rate limited')) {
+    // Only clear notices when not in a rate-limited state
+    if (!twitterDisabled) {
       setNotice(null);
     }
 
@@ -214,15 +215,9 @@ export default function NewsFeed() {
               JSON.stringify({ timestamp: Date.now(), resetTime: retryAt })
             );
 
+            setRateLimitResetAt(retryAt);
             const mins = Math.max(1, Math.ceil((retryAt - Date.now()) / (60 * 1000)));
             setNotice(`Twitter API is rate limited. Will try again in approximately ${mins} minutes.`);
-
-            // Early return to avoid throwing handled 429s further
-            allNews = [...mockNews];
-            setNews(allNews);
-            setLastUpdated(new Date());
-            setLoading(false);
-            return;
           } else {
             setNotice(baseMessage);
           }
@@ -285,7 +280,7 @@ export default function NewsFeed() {
       setLastUpdated(new Date());
     }
     setLoading(false);
-  }, [twitterDisabled, notice]);
+  }, [twitterDisabled]);
 
   // Process tweets from the X API response
   const processTweets = (twitterData: RecentSearchResponse): NewsItem[] => {
@@ -359,16 +354,40 @@ export default function NewsFeed() {
     return () => clearInterval(interval);
   }, [twitterDisabled, fetchNews]);
 
-  // Function to manually retry Twitter integration
-  const handleRetryTwitter = () => {
-    if (twitterDisabled) {
-      // Clear rate limit status
-      localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
-      setTwitterDisabled(false);
-      setNotice('Retrying Twitter integration...');
-      fetchNews();
-    }
-  };
+  // Live countdown for rate limit window; auto-clear and retry when done
+  useEffect(() => {
+    if (!twitterDisabled || rateLimitResetAt == null) return;
+    const tick = () => {
+      const remainingMs = rateLimitResetAt - Date.now();
+      if (remainingMs <= 0) {
+        localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
+        setTwitterDisabled(false);
+        setRateLimitResetAt(null);
+        setNotice('Retrying Twitter integration...');
+        // trigger immediate retry
+        fetchNews();
+        return false;
+      }
+      const totalSecs = Math.ceil(remainingMs / 1000);
+      const mins = Math.floor(totalSecs / 60);
+      const secs = totalSecs % 60;
+      const minsPart = mins > 0 ? `${mins} minute${mins !== 1 ? 's' : ''}` : '';
+      const secsPart = secs > 0 ? `${secs} second${secs !== 1 ? 's' : ''}` : '';
+      const sep = minsPart && secsPart ? ' ' : '';
+      setNotice(
+        `Twitter API is rate limited. Will try again in approximately ${minsPart}${sep}${secsPart}.`
+      );
+      return true;
+    };
+    // Run immediately to refresh UI, then every second
+    tick();
+    const id = setInterval(() => {
+      const keep = tick();
+      if (!keep) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [twitterDisabled, rateLimitResetAt, fetchNews]);
+
 
   const filteredNews =
     activeTab === 'all' ? news : news.filter(item => item.category === activeTab);
@@ -426,18 +445,6 @@ export default function NewsFeed() {
         <div className="mb-4 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             {lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
-          </div>
-          <div className="flex gap-2">
-            {twitterDisabled && (
-              <Button variant="outline" size="sm" onClick={handleRetryTwitter}>
-                <Twitter className="mr-1 size-4 text-blue-400" />
-                Retry X
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={fetchNews} disabled={loading}>
-              <RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />
-              Refresh
-            </Button>
           </div>
         </div>
 

@@ -35,7 +35,7 @@ export function ThemeToggle() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative size-9">
           <span className="text-lg transition-all dark:hidden">☀️</span>
-          <span className="absolute text-lg transition-all hidden dark:block">🌙</span>
+          <span className="absolute hidden text-lg transition-all dark:block">🌙</span>
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
@@ -101,7 +101,7 @@ export function ThemeToggleSwitch() {
         Dark mode
       </Label>
       <span className="text-sm transition-all dark:hidden">☀️</span>
-      <span className="absolute text-sm transition-all hidden dark:block">🌙</span>
+      <span className="absolute hidden text-sm transition-all dark:block">🌙</span>
     </div>
   );
 }

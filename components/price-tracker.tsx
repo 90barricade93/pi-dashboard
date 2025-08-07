@@ -111,7 +111,7 @@ export default function PriceTracker() {
         <div className="flex flex-col items-center justify-center p-4">
           {loading ? (
             <div className="flex h-24 items-center justify-center">
-              <span className="text-2xl animate-spin">🔄</span>
+              <span className="animate-spin text-2xl">🔄</span>
             </div>
           ) : (
             <>

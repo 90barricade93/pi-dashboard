@@ -3,8 +3,8 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useChartAccessibility } from '@/hooks/use-chart-accessibility';
-import type { ChartAccessibilityData } from '@/lib/chart-accessibility';
+import { useChartAccessibility, useFocusIndicator, useScreenReaderDescription } from '../hooks/use-chart-accessibility';
+import type { ChartAccessibilityData } from '../lib/chart-accessibility';
 
 // Mock DOM methods for testing
 Object.defineProperty(window, 'matchMedia', {
@@ -30,15 +30,23 @@ Object.defineProperty(document, 'body', {
   },
 });
 
-// Mock createElement for live regions
-const mockElement = {
-  setAttribute: jest.fn(),
-  style: {} as any,
-  textContent: '',
-  parentNode: document.body
-} as any;
+// Mock createElement for live regions (typed to avoid `any`)
+type LiveRegionMockElement = {
+  setAttribute: (name: string, value: string) => void;
+  style: Partial<CSSStyleDeclaration>;
+  textContent: string;
+  parentNode: HTMLElement | null;
+};
 
-jest.spyOn(document, 'createElement').mockReturnValue(mockElement);
+const mockElement: LiveRegionMockElement = {
+  setAttribute: jest.fn(),
+  style: {},
+  textContent: '',
+  // document.body is mocked above; cast to HTMLElement for typing only
+  parentNode: (document.body as unknown as HTMLElement),
+};
+
+jest.spyOn(document, 'createElement').mockReturnValue(mockElement as unknown as HTMLElement);
 
 describe('useChartAccessibility', () => {
   const mockData: ChartAccessibilityData = {
@@ -187,11 +195,12 @@ describe('useChartAccessibility', () => {
   it('should apply high contrast styles to canvas context', () => {
     const { result } = renderHook(() => useChartAccessibility());
 
-    const mockCtx = {
+    // Minimal context typed via unknown cast to avoid `any`
+    const mockCtx = ({
       lineWidth: 1,
       shadowColor: 'rgba(0,0,0,0.5)',
-      shadowBlur: 5
-    } as any;
+      shadowBlur: 5,
+    } as unknown) as CanvasRenderingContext2D;
 
     act(() => {
       result.current.applyHighContrastStyles(mockCtx);
@@ -265,8 +274,6 @@ describe('useChartAccessibility', () => {
 
 describe('useScreenReaderDescription', () => {
   it('should create description element with unique ID', () => {
-    const { useScreenReaderDescription } = require('@/hooks/use-chart-accessibility');
-    
     const { descriptionElementId, DescriptionElement } = useScreenReaderDescription(
       'test-chart',
       'Test description'
@@ -279,40 +286,32 @@ describe('useScreenReaderDescription', () => {
 
 describe('useFocusIndicator', () => {
   it('should manage focus state for canvas element', () => {
-    const { useFocusIndicator } = require('@/hooks/use-chart-accessibility');
-    
-    const mockCanvas = {
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      style: {}
-    } as any;
+    const mockCanvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas') as HTMLCanvasElement;
+    const addSpy = jest.spyOn(mockCanvas, 'addEventListener');
+    jest.spyOn(mockCanvas, 'removeEventListener');
 
-    const canvasRef = { current: mockCanvas };
+    const canvasRef = { current: mockCanvas } as React.RefObject<HTMLCanvasElement>;
 
     const { result } = renderHook(() => 
       useFocusIndicator(canvasRef, false)
     );
 
-    expect(mockCanvas.addEventListener).toHaveBeenCalledWith('focus', expect.any(Function));
-    expect(mockCanvas.addEventListener).toHaveBeenCalledWith('blur', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('focus', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('blur', expect.any(Function));
     expect(result.current.isFocused).toBe(false);
   });
 
   it('should apply high contrast focus styles', () => {
-    const { useFocusIndicator } = require('@/hooks/use-chart-accessibility');
-    
-    const mockCanvas = {
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      style: {}
-    } as any;
+    const mockCanvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas') as HTMLCanvasElement;
+    const addSpy = jest.spyOn(mockCanvas, 'addEventListener');
+    jest.spyOn(mockCanvas, 'removeEventListener');
 
-    const canvasRef = { current: mockCanvas };
+    const canvasRef = { current: mockCanvas } as React.RefObject<HTMLCanvasElement>;
 
     renderHook(() => useFocusIndicator(canvasRef, true)); // High contrast mode
 
     // Verify event listeners were added
-    expect(mockCanvas.addEventListener).toHaveBeenCalledWith('focus', expect.any(Function));
-    expect(mockCanvas.addEventListener).toHaveBeenCalledWith('blur', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('focus', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('blur', expect.any(Function));
   });
 });

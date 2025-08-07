@@ -72,7 +72,7 @@ const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentP
     className={cn('[&>svg]:w-3.5 [&>svg]:h-3.5', className)}
     {...props}
   >
-    {children ?? <ChevronDown className="rotate-[-90deg]" />}
+    {children ?? <ChevronDown className="-rotate-90" />}
   </li>
 );
 BreadcrumbSeparator.displayName = 'BreadcrumbSeparator';

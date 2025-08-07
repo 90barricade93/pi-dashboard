@@ -902,7 +902,7 @@ export default function PricePrediction() {
 
           {loading ? (
             <div className="flex h-[300px] items-center justify-center">
-              <span className="text-4xl animate-spin">🔄</span>
+              <span className="animate-spin text-4xl">🔄</span>
             </div>
           ) : prediction ? (
             <>
@@ -918,17 +918,17 @@ export default function PricePrediction() {
                 />
                 {isTransitioning && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-sm">
-                    <div className="text-sm text-muted-foreground animate-pulse">
+                    <div className="animate-pulse text-sm text-muted-foreground">
                       Updating chart...
                     </div>
                   </div>
                 )}
                 {/* Performance metrics display (development only) */}
                 {process.env.NODE_ENV === 'development' && performanceMetrics.length > 0 && (
-                  <div className="absolute top-2 right-2 text-xs text-muted-foreground bg-background/80 rounded px-2 py-1">
+                  <div className="absolute right-2 top-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
                     Render: {performanceMetrics[performanceMetrics.length - 1]?.renderTime.toFixed(1)}ms
                     {performanceMetrics[performanceMetrics.length - 1]?.renderTime > 500 && (
-                      <span className="text-red-500 ml-1">⚠️</span>
+                      <span className="ml-1 text-red-500">⚠️</span>
                     )}
                   </div>
                 )}

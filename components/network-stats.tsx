@@ -67,7 +67,7 @@ export default function NetworkStats() {
       <CardContent>
         {loading || !stats ? (
           <div className="flex h-[200px] items-center justify-center">
-            <span className="text-4xl animate-spin">🔄</span>
+            <span className="animate-spin text-4xl">🔄</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -100,7 +100,7 @@ export default function NetworkStats() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground text-xs">⚡</span>
+                  <span className="text-xs text-muted-foreground">⚡</span>
                   <span className="text-sm">TPS</span>
                 </div>
                 <span className="text-sm font-medium">{stats.transactionsPerSecond}</span>

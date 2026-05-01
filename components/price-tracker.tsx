@@ -1,95 +1,46 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownRight, AlertTriangle } from '@/components/ui/icons';
 import { PriceCardSkeleton } from '@/components/ui/widget-skeleton';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
-import { fetchPiPrice } from '@/lib/api-client';
-import { logger } from '@/lib/logger';
 import { currencySymbols } from '@/lib/currency-symbols';
 import { PoweredByOkx } from '@/components/powered-by-okx';
-import { PRICE_POLL_INTERVAL_MS } from '@/lib/constants';
 import { notifyError } from '@/lib/toast';
+import { usePiPriceStream } from '@/hooks/use-pi-price-stream';
 
 export default function PriceTracker() {
   const { currency, setCurrency } = useCurrency();
-  const [price, setPrice] = useState<number | null>(null);
-  const [previousPrice, setPreviousPrice] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { price, status, error, lastUpdated } = usePiPriceStream(currency);
   const errorToastedRef = useRef(false);
+  const prevPriceRef = useRef<number | null>(null);
+  const previousPrice = prevPriceRef.current;
 
-  // Fetch Pi price from OKX API
-  const getPiPrice = async () => {
-    setLoading(true);
-    setError(null);
-
-    // Store previous price for comparison
-    if (price !== null) {
-      setPreviousPrice(price);
-    }
-
-    try {
-      const result = await fetchPiPrice(currency);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      if (result.price !== null) {
-        setPrice(result.price);
-        setLastUpdated(new Date());
-        errorToastedRef.current = false;
-      } else {
-        throw new Error('Price data not available');
-      }
-    } catch (error) {
-      logger.error('price_tracker_fetch_failed', { currency, error: String(error) });
-      setError('Failed to fetch price data. Using fallback data.');
-      if (!errorToastedRef.current) {
-        notifyError('Pi price update failed — showing fallback data.');
-        errorToastedRef.current = true;
-      }
-
-      // Fallback to simulated data if API fails
-      const basePrice = 0.31415; // Approximate Pi price in USD as fallback
-
-      // Apply currency conversion (simplified for fallback)
-      const rates: Record<Currency, number> = {
-        EUR: 0.92,
-        USD: 1,
-        GBP: 0.79,
-        JPY: 150,
-        RUB: 92,
-      };
-
-      const convertedPrice = basePrice * rates[currency];
-      setPrice(convertedPrice);
-      setLastUpdated(new Date());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Initial fetch and setup interval for updates
   useEffect(() => {
-    getPiPrice();
+    prevPriceRef.current = price;
+  }, [price]);
 
-    const interval = setInterval(getPiPrice, PRICE_POLL_INTERVAL_MS);
+  useEffect(() => {
+    if (status === 'error' && !errorToastedRef.current) {
+      notifyError('Pi price stream interrupted — reconnecting.');
+      errorToastedRef.current = true;
+    }
+    if (status === 'connected') {
+      errorToastedRef.current = false;
+    }
+  }, [status]);
 
-    return () => clearInterval(interval);
-  }, [currency]);
-
-  // Calculate price change
-  const priceChange = price !== null && previousPrice !== null ? price - previousPrice : null;
-
+  const loading = price === null;
+  const priceChange =
+    price !== null && previousPrice !== null && previousPrice !== price
+      ? price - previousPrice
+      : null;
   const priceChangePercent =
-    price !== null && previousPrice !== null && previousPrice !== 0
-      ? ((price - previousPrice) / previousPrice) * 100
+    priceChange !== null && previousPrice !== null && previousPrice !== 0
+      ? (priceChange / previousPrice) * 100
       : null;
 
   return (
@@ -162,7 +113,7 @@ export default function PriceTracker() {
             )}
 
             <div className="mt-4 text-xs text-muted-foreground">
-              Last updated: {lastUpdated?.toLocaleTimeString()}
+              Last updated: {lastUpdated?.toLocaleTimeString() ?? '—'}
             </div>
 
             <PoweredByOkx />

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle } from '@/components/ui/icons';
+import { ArrowUpRight, ArrowDownRight, AlertTriangle } from '@/components/ui/icons';
+import { PriceCardSkeleton } from '@/components/ui/widget-skeleton';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice } from '@/lib/api-client';
@@ -103,60 +104,56 @@ export default function PriceTracker() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center justify-center p-4">
-          {loading ? (
-            <div className="flex h-24 items-center justify-center">
-              <RefreshCw className="size-6 animate-spin" aria-hidden="true" />
+        {loading ? (
+          <PriceCardSkeleton />
+        ) : (
+          <div className="flex flex-col items-center justify-center p-4">
+            <div className="mb-2 text-4xl font-bold">
+              {currencySymbols[currency]}
+              {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
             </div>
-          ) : (
-            <>
-              <div className="mb-2 text-4xl font-bold">
-                {currencySymbols[currency]}
-                {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
+
+            {priceChange !== null && (
+              <div
+                className={cn(
+                  'flex items-center text-sm',
+                  priceChange > 0
+                    ? 'text-green-500'
+                    : priceChange < 0
+                      ? 'text-red-500'
+                      : 'text-gray-500'
+                )}
+              >
+                {priceChange > 0 ? (
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                ) : priceChange < 0 ? (
+                  <ArrowDownRight className="size-4" aria-hidden="true" />
+                ) : null}
+                <span>
+                  {priceChange > 0 ? '+' : ''}
+                  {priceChange.toFixed(8)}(
+                  {priceChangePercent !== null
+                    ? (priceChangePercent > 0 ? '+' : '') + priceChangePercent.toFixed(2)
+                    : 0}
+                  %)
+                </span>
               </div>
+            )}
 
-              {priceChange !== null && (
-                <div
-                  className={cn(
-                    'flex items-center text-sm',
-                    priceChange > 0
-                      ? 'text-green-500'
-                      : priceChange < 0
-                        ? 'text-red-500'
-                        : 'text-gray-500'
-                  )}
-                >
-                  {priceChange > 0 ? (
-                    <ArrowUpRight className="size-4" aria-hidden="true" />
-                  ) : priceChange < 0 ? (
-                    <ArrowDownRight className="size-4" aria-hidden="true" />
-                  ) : null}
-                  <span>
-                    {priceChange > 0 ? '+' : ''}
-                    {priceChange.toFixed(8)}(
-                    {priceChangePercent !== null
-                      ? (priceChangePercent > 0 ? '+' : '') + priceChangePercent.toFixed(2)
-                      : 0}
-                    %)
-                  </span>
-                </div>
-              )}
-
-              {error && (
-                <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
-                  <AlertTriangle className="size-3" aria-hidden="true" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div className="mt-4 text-xs text-muted-foreground">
-                Last updated: {lastUpdated?.toLocaleTimeString()}
+            {error && (
+              <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
+                <AlertTriangle className="size-3" aria-hidden="true" />
+                <span>{error}</span>
               </div>
+            )}
 
-              <PoweredByOkx />
-            </>
-          )}
-        </div>
+            <div className="mt-4 text-xs text-muted-foreground">
+              Last updated: {lastUpdated?.toLocaleTimeString()}
+            </div>
+
+            <PoweredByOkx />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

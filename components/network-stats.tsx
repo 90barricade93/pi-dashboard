@@ -6,7 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { logger } from '@/lib/logger';
 import { formatCompactNumber } from '@/lib/format-helpers';
 import { NETWORK_STATS_POLL_INTERVAL_MS } from '@/lib/constants';
-import { RefreshCw, Users, Globe, Zap } from '@/components/ui/icons';
+import { Users, Globe, Zap } from '@/components/ui/icons';
+import { StatsCardSkeleton } from '@/components/ui/widget-skeleton';
 
 interface NetworkStatsData {
   activeUsers: number;
@@ -60,9 +61,7 @@ export default function NetworkStats() {
       </CardHeader>
       <CardContent>
         {loading || !stats ? (
-          <div className="flex h-[200px] items-center justify-center">
-            <RefreshCw className="size-8 animate-spin" aria-hidden="true" />
-          </div>
+          <StatsCardSkeleton />
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

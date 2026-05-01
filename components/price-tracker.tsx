@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownRight, AlertTriangle } from '@/components/ui/icons';
@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger';
 import { currencySymbols } from '@/lib/currency-symbols';
 import { PoweredByOkx } from '@/components/powered-by-okx';
 import { PRICE_POLL_INTERVAL_MS } from '@/lib/constants';
+import { notifyError } from '@/lib/toast';
 
 export default function PriceTracker() {
   const { currency, setCurrency } = useCurrency();
@@ -20,6 +21,7 @@ export default function PriceTracker() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const errorToastedRef = useRef(false);
 
   // Fetch Pi price from OKX API
   const getPiPrice = async () => {
@@ -41,12 +43,17 @@ export default function PriceTracker() {
       if (result.price !== null) {
         setPrice(result.price);
         setLastUpdated(new Date());
+        errorToastedRef.current = false;
       } else {
         throw new Error('Price data not available');
       }
     } catch (error) {
       logger.error('price_tracker_fetch_failed', { currency, error: String(error) });
       setError('Failed to fetch price data. Using fallback data.');
+      if (!errorToastedRef.current) {
+        notifyError('Pi price update failed — showing fallback data.');
+        errorToastedRef.current = true;
+      }
 
       // Fallback to simulated data if API fails
       const basePrice = 0.31415; // Approximate Pi price in USD as fallback

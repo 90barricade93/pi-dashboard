@@ -2,7 +2,7 @@
 
 import type React from 'react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { logger } from '@/lib/logger';
 import { currencySymbols } from '@/lib/currency-symbols';
 import { PoweredByOkx } from '@/components/powered-by-okx';
 import { formatPresetAmount } from '@/lib/format-helpers';
+import { notifyError } from '@/lib/toast';
 
 export default function PiCalculator() {
   const { currency } = useCurrency();
@@ -20,6 +21,7 @@ export default function PiCalculator() {
   const [piPrice, setPiPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const errorToastedRef = useRef(false);
 
   // Fetch current Pi price
   useEffect(() => {
@@ -33,15 +35,24 @@ export default function PiCalculator() {
 
         if (newPrice !== null) {
           setPiPrice(newPrice);
+          errorToastedRef.current = false;
         } else {
           setError(priceError);
           // Fallback to simulated price if API fails
           setPiPrice(fallbackPrices[currency]);
+          if (!errorToastedRef.current) {
+            notifyError('Pi price update failed — showing fallback data.');
+            errorToastedRef.current = true;
+          }
         }
       } catch (error) {
         logger.error('pi_calculator_fetch_failed', { currency, error: String(error) });
         setError('Failed to fetch price data. Using fallback data.');
         setPiPrice(fallbackPrices[currency]);
+        if (!errorToastedRef.current) {
+          notifyError('Pi price update failed — showing fallback data.');
+          errorToastedRef.current = true;
+        }
       } finally {
         setLoading(false);
       }

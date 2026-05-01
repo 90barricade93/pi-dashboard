@@ -7,24 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useCurrency, type Currency } from '@/contexts/currency-context';
+import { useCurrency } from '@/contexts/currency-context';
 import { fetchPiPrice, fallbackPrices } from '@/lib/api-client';
-
-const currencySymbols: Record<Currency, string> = {
-  EUR: '€',
-  USD: '$',
-  GBP: '£',
-  JPY: '¥',
-  RUB: '₽',
-};
-
-// Utility functie voor consistente number formatting
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 3,
-  }).format(value);
-};
+import { logger } from '@/lib/logger';
+import { currencySymbols } from '@/lib/currency-symbols';
+import { PoweredByOkx } from '@/components/powered-by-okx';
+import { formatPresetAmount } from '@/lib/format-helpers';
 
 export default function PiCalculator() {
   const { currency } = useCurrency();
@@ -51,7 +39,7 @@ export default function PiCalculator() {
           setPiPrice(fallbackPrices[currency]);
         }
       } catch (error) {
-        console.error('Error fetching Pi price:', error);
+        logger.error('pi_calculator_fetch_failed', { currency, error: String(error) });
         setError('Failed to fetch price data. Using fallback data.');
         setPiPrice(fallbackPrices[currency]);
       } finally {
@@ -120,7 +108,7 @@ export default function PiCalculator() {
                 onClick={() => setPiAmount(amount.toString())}
                 className="flex-1"
               >
-                {formatNumber(amount)}
+                {formatPresetAmount(amount)}
               </Button>
             ))}
           </div>
@@ -140,30 +128,7 @@ export default function PiCalculator() {
             {error && <div className="mt-1 text-xs text-amber-500">{error}</div>}
           </div>
 
-          <div className="mt-2 flex items-center justify-center text-center text-xs text-muted-foreground">
-            <span>Powered by</span>
-            <a
-              href="https://www.okx.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 flex items-center transition-colors hover:text-foreground"
-            >
-              OKX
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="ml-1 size-3"
-              >
-                <path d="M7 17L17 7"></path>
-                <path d="M7 7h10v10"></path>
-              </svg>
-            </a>
-          </div>
+          <PoweredByOkx />
         </div>
       </CardContent>
     </Card>

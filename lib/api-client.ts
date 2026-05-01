@@ -1,6 +1,11 @@
-// API client to handle CoinGecko API requests and key management
+// OKX-backed price API client; see lib/okx-client.ts for the underlying signing/caching logic.
 
 import { OKXApiClient } from './okx-client';
+import { logger } from './logger';
+
+export interface HistoricalPriceData {
+  prices: Array<[number, number]>;
+}
 
 // Fallback prices in case the API is unavailable
 export const fallbackPrices = {
@@ -14,28 +19,6 @@ export const fallbackPrices = {
 const okxClient = new OKXApiClient();
 
 /**
- * Get the CoinGecko API key from environment variables
- * Falls back to demo key if not set (not recommended for production)
- */
-// export const getCoinGeckoApiKey = (): string => {
-//   const apiKey = process.env.NEXT_PUBLIC_COINGECKO_API_KEY
-
-//   if (!apiKey) {
-//     // Only log this warning during development
-//     if (process.env.NODE_ENV === "development") {
-//       console.warn(
-//         "NEXT_PUBLIC_COINGECKO_API_KEY environment variable is not set. Using fallback demo key. " +
-//           "This is not recommended for production use.",
-//       )
-//     }
-//     // Return a demo key (limited usage)
-//     return "CG-mLgtcXJ3Sof8g5thnCCosstx"
-//   }
-
-//   return apiKey
-// }
-
-/**
  * Fetch current Pi price from OKX
  */
 export const fetchPiPrice = async (
@@ -44,7 +27,7 @@ export const fetchPiPrice = async (
   try {
     return await okxClient.fetchPiPrice(currency);
   } catch (error) {
-    console.error('Error fetching Pi price:', error);
+    logger.warn('fetch_pi_price_failed', { currency, error: String(error) });
     return {
       price: null,
       error: 'Failed to fetch price data. Using fallback data.',
@@ -59,11 +42,11 @@ export const fetchPiHistoricalData = async (
   currency: string,
   days = 7,
   bar?: '1m' | '3m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'
-): Promise<{ data: any; error: string | null }> => {
+): Promise<{ data: HistoricalPriceData | null; error: string | null }> => {
   try {
     return await okxClient.fetchHistoricalData(currency, days, bar);
   } catch (error) {
-    console.error('Error fetching historical data:', error);
+    logger.warn('fetch_pi_historical_failed', { currency, days, bar, error: String(error) });
     return {
       data: null,
       error: 'Failed to fetch historical data. Prediction may be less accurate.',

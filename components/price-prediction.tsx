@@ -39,6 +39,7 @@ import {
   useFocusIndicator 
 } from '@/hooks/use-chart-accessibility';
 import type { ChartAccessibilityData } from '@/lib/chart-accessibility';
+import { logger } from '@/lib/logger';
 
 type PredictionTrend = 'up' | 'down' | 'stable';
 type TimeFrame = '30min' | '1hour' | '2hours' | '6hours' | '12hours';
@@ -152,7 +153,7 @@ export default function PricePrediction() {
           setError(historyError);
         }
       } catch (error) {
-        console.error('Error in data fetching:', error);
+        logger.error('price_prediction_fetch_failed', { currency, error: String(error) });
         setError('Failed to fetch complete data. Prediction may be less accurate.');
 
         // If we have current price but no historical data, we can still make predictions

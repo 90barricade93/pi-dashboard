@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
+import { formatCompactNumber } from '@/lib/format-helpers';
+import { NETWORK_STATS_POLL_INTERVAL_MS } from '@/lib/constants';
 // Removed lucide-react import
 
 interface NetworkStatsData {
@@ -37,7 +40,7 @@ export default function NetworkStats() {
 
         setStats(mockStats);
       } catch (error) {
-        console.error('Error fetching network stats:', error);
+        logger.error('network_stats_fetch_failed', { error: String(error) });
       } finally {
         setLoading(false);
       }
@@ -45,19 +48,10 @@ export default function NetworkStats() {
 
     fetchStats();
 
-    // Update stats every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
+    const interval = setInterval(fetchStats, NETWORK_STATS_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, []);
-
-  const formatNumber = (num: number) => {
-    return num >= 1000000
-      ? (num / 1000000).toFixed(1) + 'M'
-      : num >= 1000
-        ? (num / 1000).toFixed(1) + 'K'
-        : num.toString();
-  };
 
   return (
     <Card>
@@ -77,7 +71,7 @@ export default function NetworkStats() {
                   <span className="text-sm text-muted-foreground">👥</span>
                   <span className="text-sm font-medium">Active Users</span>
                 </div>
-                <span className="text-2xl font-bold">{formatNumber(stats.activeUsers)}</span>
+                <span className="text-2xl font-bold">{formatCompactNumber(stats.activeUsers)}</span>
               </div>
 
               <div className="flex flex-col">
@@ -85,7 +79,7 @@ export default function NetworkStats() {
                   <span className="text-sm text-muted-foreground">🌐</span>
                   <span className="text-sm font-medium">Total Nodes</span>
                 </div>
-                <span className="text-2xl font-bold">{formatNumber(stats.totalNodes)}</span>
+                <span className="text-2xl font-bold">{formatCompactNumber(stats.totalNodes)}</span>
               </div>
             </div>
 

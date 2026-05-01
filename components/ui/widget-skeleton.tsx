@@ -14,7 +14,7 @@ export function PriceCardSkeleton() {
 export function StatsCardSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 @sm/card:grid-cols-2">
         {[0, 1].map(i => (
           <div key={i} className="flex flex-col gap-2">
             <Skeleton className="h-4 w-24" />

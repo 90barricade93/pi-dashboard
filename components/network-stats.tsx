@@ -64,7 +64,7 @@ export default function NetworkStats() {
           <StatsCardSkeleton />
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 @sm/card:grid-cols-2">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <Users className="size-4 text-muted-foreground" aria-hidden="true" />

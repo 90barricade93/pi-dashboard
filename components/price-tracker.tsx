@@ -94,9 +94,9 @@ export default function PriceTracker() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardHeader className="flex flex-col items-start gap-2 pb-2 @sm/card:flex-row @sm/card:items-center @sm/card:justify-between @sm/card:gap-0">
         <CardTitle>Price</CardTitle>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1 @md/card:flex-nowrap">
           {Object.keys(currencySymbols).map(curr => (
             <Button
               key={curr}

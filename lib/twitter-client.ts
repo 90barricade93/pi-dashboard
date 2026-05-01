@@ -42,9 +42,9 @@ export type RecentSearchResponse = {
 
 export type RecentSearchParams = {
   query: string;
-  "tweet.fields"?: string;
+  'tweet.fields'?: string;
   expansions?: string;
-  "user.fields"?: string;
+  'user.fields'?: string;
   max_results?: number;
 };
 
@@ -60,7 +60,7 @@ export class TwitterApiError extends Error {
     headers?: Record<string, string>
   ) {
     super(message);
-    this.name = "TwitterApiError";
+    this.name = 'TwitterApiError';
     this.status = status;
     this.details = details;
     this.headers = headers;
@@ -79,14 +79,12 @@ export class TwitterClient {
   private readonly fetchFn: typeof fetch;
 
   constructor(options: TwitterClientOptions = {}) {
-    const token = options.bearerToken ?? process.env["TWITTER_BEARER_TOKEN"];
+    const token = options.bearerToken ?? process.env['TWITTER_BEARER_TOKEN'];
     if (!token) {
-      throw new Error(
-        "TWITTER_BEARER_TOKEN is not set. Provide via env or constructor."
-      );
+      throw new Error('TWITTER_BEARER_TOKEN is not set. Provide via env or constructor.');
     }
 
-    this.baseUrl = options.baseUrl ?? "https://api.twitter.com/2";
+    this.baseUrl = options.baseUrl ?? 'https://api.twitter.com/2';
     this.bearerToken = token;
     this.fetchFn = options.fetchFn ?? (globalThis.fetch as typeof fetch);
   }
@@ -95,21 +93,18 @@ export class TwitterClient {
    * Calls Twitter v2 Recent Search.
    * Defaults replicate current app usage but can be overridden.
    */
-  async searchRecent(
-    params: RecentSearchParams
-  ): Promise<RecentSearchResponse> {
+  async searchRecent(params: RecentSearchParams): Promise<RecentSearchResponse> {
     const url = new URL(`${this.baseUrl}/tweets/search/recent`);
 
     // Apply defaults matching current usage if not provided
-    const fullParams: Required<Pick<RecentSearchParams,
-      "tweet.fields" | "expansions" | "user.fields" | "max_results"
-    >> & Pick<RecentSearchParams, "query"> = {
+    const fullParams: Required<
+      Pick<RecentSearchParams, 'tweet.fields' | 'expansions' | 'user.fields' | 'max_results'>
+    > &
+      Pick<RecentSearchParams, 'query'> = {
       query: params.query,
-      "tweet.fields":
-        params["tweet.fields"] ?? "created_at,public_metrics",
-      expansions: params.expansions ?? "author_id",
-      "user.fields":
-        params["user.fields"] ?? "name,username,profile_image_url",
+      'tweet.fields': params['tweet.fields'] ?? 'created_at,public_metrics',
+      expansions: params.expansions ?? 'author_id',
+      'user.fields': params['user.fields'] ?? 'name,username,profile_image_url',
       max_results: params.max_results ?? 10,
     };
 
@@ -120,11 +115,11 @@ export class TwitterClient {
     url.search = searchParams.toString();
 
     const res = await this.fetchFn(url.toString(), {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${this.bearerToken}`,
-        Accept: "application/json",
-        "User-Agent": "PiDashboard TwitterClient/1.0",
+        Accept: 'application/json',
+        'User-Agent': 'PiDashboard TwitterClient/1.0',
       },
     });
 
@@ -136,12 +131,7 @@ export class TwitterClient {
         // ignore
       }
       const headersObj = Object.fromEntries(res.headers.entries());
-      throw new TwitterApiError(
-        "Twitter API request failed",
-        res.status,
-        details,
-        headersObj
-      );
+      throw new TwitterApiError('Twitter API request failed', res.status, details, headersObj);
     }
 
     return (await res.json()) as RecentSearchResponse;

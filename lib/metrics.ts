@@ -66,7 +66,9 @@ export const CTR_TWITTER_RATE_LIMIT_HITS = 'twitter_rate_limit_hits';
 export const CTR_TWITTER_API_ERRORS = 'twitter_api_errors';
 
 // Simple alert helpers for rate-limit hits within a window
-const WINDOW_MS = Number(process.env['METRICS_ALERT_TWITTER_RATE_LIMIT_WINDOW_MS'] ?? 15 * 60 * 1000);
+const WINDOW_MS = Number(
+  process.env['METRICS_ALERT_TWITTER_RATE_LIMIT_WINDOW_MS'] ?? 15 * 60 * 1000
+);
 const THRESHOLD = Number(process.env['METRICS_ALERT_TWITTER_RATE_LIMIT_THRESHOLD'] ?? 5);
 
 export function recordTwitterRateLimit(by = 1) {

@@ -90,8 +90,6 @@
 
 - [ ] 12. Implement HiDPI canvas optimization for crisp rendering
 
-
-
   - Create function to setup canvas with device pixel ratio scaling
   - Add fallback handling for HiDPI setup failures
   - Update canvas rendering to work with scaled contexts
@@ -99,6 +97,7 @@
   - _Requirements: 3.1, 3.2, 3.3_
 
 - [ ] 13. Add smooth line rendering configuration
+
   - Configure canvas context for rounded line caps and joins
   - Update chart line drawing to use smooth rendering settings
   - Ensure smooth rendering works with HiDPI optimization
@@ -106,6 +105,7 @@
   - _Requirements: 3.1, 3.2, 3.3_
 
 - [ ] 14. Implement vertical "Now" marker with timestamp label
+
   - Create function to draw vertical line at current time position
   - Add timestamp label positioning that avoids overlap with other elements
   - Implement responsive styling for the Now marker across device types
@@ -113,6 +113,7 @@
   - _Requirements: 1.1, 3.1, 3.2, 3.3_
 
 - [ ] 15. Add confidence band rendering for prediction uncertainty
+
   - Create function to draw semi-transparent cone around prediction line
   - Implement confidence band calculation from prediction data
   - Add responsive styling for confidence bands across device types
@@ -120,6 +121,7 @@
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 16. Implement hover tooltip system with nearest point detection
+
   - Create tooltip component that shows timestamp, price, current and target values
   - Implement algorithm to find nearest data point to mouse position
   - Add tooltip positioning logic that handles viewport edge cases
@@ -127,6 +129,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 5.1, 5.2_
 
 - [ ] 17. Optimize axis range padding for better data visualization
+
   - Implement dynamic axis range calculation with 0.5-1.0% padding
   - Update Y-axis scaling to minimize empty space around data
   - Add logic to handle edge cases with very small or large price ranges

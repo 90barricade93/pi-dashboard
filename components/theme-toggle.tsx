@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-// import { Moon, Sun } from 'lucide-react';
+import { Sun, Moon, Monitor } from '@/components/ui/icons';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -34,37 +34,22 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative size-9">
-          <span className="text-lg transition-all dark:hidden">☀️</span>
-          <span className="absolute hidden text-lg transition-all dark:block">🌙</span>
+          <Sun className="size-4 transition-all dark:hidden" aria-hidden="true" />
+          <Moon className="absolute hidden size-4 transition-all dark:block" aria-hidden="true" />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme('light')}>
-          <span className="mr-2">☀️</span>
+          <Sun className="mr-2 size-4" aria-hidden="true" />
           Light
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('dark')}>
-          <span className="mr-2">🌙</span>
+          <Moon className="mr-2 size-4" aria-hidden="true" />
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('system')}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2"
-          >
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-          </svg>
+          <Monitor className="mr-2 size-4" aria-hidden="true" />
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -100,8 +85,8 @@ export function ThemeToggleSwitch() {
       <Label htmlFor="theme-mode" className="sr-only">
         Dark mode
       </Label>
-      <span className="text-sm transition-all dark:hidden">☀️</span>
-      <span className="absolute hidden text-sm transition-all dark:block">🌙</span>
+      <Sun className="size-4 transition-all dark:hidden" aria-hidden="true" />
+      <Moon className="absolute hidden size-4 transition-all dark:block" aria-hidden="true" />
     </div>
   );
 }

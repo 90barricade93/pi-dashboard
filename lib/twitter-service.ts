@@ -1,6 +1,6 @@
-import { TwitterClient, TwitterApiError } from "./twitter-client";
-import type { CacheStore } from "./cache-store";
-import type { RateLimiter } from "./rate-limiter";
+import { TwitterClient, TwitterApiError } from './twitter-client';
+import type { CacheStore } from './cache-store';
+import type { RateLimiter } from './rate-limiter';
 
 export type TwitterRecentResponse = {
   data?: unknown[];
@@ -42,7 +42,7 @@ export class TwitterService {
     this.client = opts.client;
     this.cache = opts.cache;
     this.limiter = opts.limiter;
-    this.cacheKey = opts.cacheKey ?? "twitter:pi-recent";
+    this.cacheKey = opts.cacheKey ?? 'twitter:pi-recent';
     this.ttlMs = opts.ttlMs ?? 4 * 60 * 60 * 1000; // 4h default
     this.sliceCount = opts.sliceCount ?? 3;
   }
@@ -72,7 +72,7 @@ export class TwitterService {
           data: this.lastGoodValue,
           fromCache: true,
           stale: true,
-          notice: "Using stale data due to internal rate limiter",
+          notice: 'Using stale data due to internal rate limiter',
           lastUpdated: this.lastGoodUpdatedAt,
         } as const;
         return retryAt !== undefined ? { ...base, retryAt } : base;
@@ -83,7 +83,7 @@ export class TwitterService {
           data: cached.value,
           fromCache: true,
           stale: true,
-          notice: "Using stale cache due to internal rate limiter",
+          notice: 'Using stale cache due to internal rate limiter',
           lastUpdated: cached.lastUpdated ?? this.lastGoodUpdatedAt,
         } as const;
         const retryAt = take.cooldownUntil;
@@ -97,15 +97,15 @@ export class TwitterService {
     // 3) Fetch from Twitter
     try {
       const fresh = await this.client.searchRecent({
-        query: "from:PiCoreTeam -is:retweet",
-        "tweet.fields": "created_at,public_metrics",
-        expansions: "author_id",
-        "user.fields": "name,username,profile_image_url",
+        query: 'from:PiCoreTeam -is:retweet',
+        'tweet.fields': 'created_at,public_metrics',
+        expansions: 'author_id',
+        'user.fields': 'name,username,profile_image_url',
         max_results: 10,
       });
 
       // Slice to a configured number of tweets if applicable
-      if (fresh && typeof fresh === "object" && fresh !== null) {
+      if (fresh && typeof fresh === 'object' && fresh !== null) {
         const maybe = fresh as TwitterRecentResponse;
         if (Array.isArray(maybe.data) && this.sliceCount > 0) {
           maybe.data = maybe.data.slice(0, this.sliceCount);
@@ -113,7 +113,11 @@ export class TwitterService {
       }
 
       // Update cache and last known good value
-      await this.cache.set<TwitterRecentResponse>(this.cacheKey, fresh as TwitterRecentResponse, this.ttlMs);
+      await this.cache.set<TwitterRecentResponse>(
+        this.cacheKey,
+        fresh as TwitterRecentResponse,
+        this.ttlMs
+      );
       this.lastGoodValue = fresh as TwitterRecentResponse;
       this.lastGoodUpdatedAt = Date.now();
       this.hasFetchedSuccessfully = true;
@@ -129,9 +133,8 @@ export class TwitterService {
       if (err instanceof TwitterApiError) {
         let retryAt: number | undefined;
         const headers = err.headers ?? {};
-        const retryAfterHeader = headers["retry-after"] || headers["Retry-After"];
-        const resetTimeHeader =
-          headers["x-rate-limit-reset"] || headers["X-Rate-Limit-Reset"];
+        const retryAfterHeader = headers['retry-after'] || headers['Retry-After'];
+        const resetTimeHeader = headers['x-rate-limit-reset'] || headers['X-Rate-Limit-Reset'];
         if (retryAfterHeader && !Number.isNaN(Number(retryAfterHeader))) {
           retryAt = Date.now() + Number(retryAfterHeader) * 1000;
         } else if (resetTimeHeader && !Number.isNaN(Number(resetTimeHeader))) {
@@ -145,8 +148,8 @@ export class TwitterService {
             stale: true,
             notice:
               err.status === 429
-                ? "Using stale data due to Twitter API rate limits"
-                : "Using stale data due to Twitter API error",
+                ? 'Using stale data due to Twitter API rate limits'
+                : 'Using stale data due to Twitter API error',
             lastUpdated: this.lastGoodUpdatedAt,
           } as const;
           return retryAt !== undefined ? { ...base, retryAt } : base;
@@ -160,8 +163,8 @@ export class TwitterService {
             stale: true,
             notice:
               err.status === 429
-                ? "Using stale cache due to Twitter API rate limits"
-                : "Using stale cache due to Twitter API error",
+                ? 'Using stale cache due to Twitter API rate limits'
+                : 'Using stale cache due to Twitter API error',
             lastUpdated: cached.lastUpdated ?? this.lastGoodUpdatedAt,
           } as const;
           return retryAt !== undefined ? { ...base, retryAt } : base;
@@ -177,7 +180,7 @@ export class TwitterService {
           data: this.lastGoodValue,
           fromCache: true,
           stale: true,
-          notice: "Using stale data due to unexpected error",
+          notice: 'Using stale data due to unexpected error',
           lastUpdated: this.lastGoodUpdatedAt,
         };
       }

@@ -14,10 +14,7 @@ export type CacheStore = {
 };
 
 export class InMemoryCacheStore implements CacheStore {
-  private store = new Map<
-    string,
-    { value: unknown; expiresAt: number; lastUpdated: number }
-  >();
+  private store = new Map<string, { value: unknown; expiresAt: number; lastUpdated: number }>();
 
   constructor(private readonly nowFn: () => number = () => Date.now()) {}
 

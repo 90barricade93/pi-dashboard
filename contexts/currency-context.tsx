@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { withViewTransition } from '@/lib/view-transition';
 
 export type Currency = 'EUR' | 'USD' | 'GBP' | 'JPY' | 'RUB';
 
@@ -12,7 +13,11 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrency] = useState<Currency>('EUR');
+  const [currency, setCurrencyState] = useState<Currency>('EUR');
+
+  const setCurrency = useCallback((next: Currency) => {
+    withViewTransition(() => setCurrencyState(next));
+  }, []);
 
   return (
     <CurrencyContext.Provider value={{ currency, setCurrency }}>

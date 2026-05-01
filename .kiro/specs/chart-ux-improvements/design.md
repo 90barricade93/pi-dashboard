@@ -9,6 +9,7 @@ This design addresses the user experience issues in the price prediction chart b
 ### Current Issues Analysis
 
 The current implementation has several problems:
+
 1. **Fixed hourly intervals** - Always shows hourly grid lines regardless of timeframe
 2. **Static padding** - Uses fixed 60px padding that doesn't scale with screen size
 3. **No label collision detection** - Time labels overlap when there are too many
@@ -50,11 +51,11 @@ interface ChartConfig {
   };
   labelSpacing: {
     minDistance: number; // Minimum pixels between labels
-    maxLabels: number;   // Maximum number of labels to show
+    maxLabels: number; // Maximum number of labels to show
   };
   timeIntervals: {
     [key in TimeFrame]: {
-      mobile: number;    // Interval in milliseconds
+      mobile: number; // Interval in milliseconds
       tablet: number;
       desktop: number;
     };
@@ -74,17 +75,10 @@ interface LabelManager {
     timeFrame: TimeFrame,
     deviceType: DeviceType
   ): TimeLabelConfig[];
-  
-  formatPriceLabel(
-    price: number,
-    currency: Currency,
-    availableWidth: number
-  ): string;
-  
-  checkLabelCollisions(
-    labels: LabelConfig[],
-    minDistance: number
-  ): LabelConfig[];
+
+  formatPriceLabel(price: number, currency: Currency, availableWidth: number): string;
+
+  checkLabelCollisions(labels: LabelConfig[], minDistance: number): LabelConfig[];
 }
 
 interface TimeLabelConfig {
@@ -120,18 +114,14 @@ interface CanvasMetrics {
 
 ```typescript
 interface VisualEnhancementManager {
-  drawNowMarker(
-    ctx: CanvasRenderingContext2D,
-    currentTime: number,
-    chartBounds: ChartBounds
-  ): void;
-  
+  drawNowMarker(ctx: CanvasRenderingContext2D, currentTime: number, chartBounds: ChartBounds): void;
+
   drawConfidenceBand(
     ctx: CanvasRenderingContext2D,
     predictionData: PredictionPoint[],
     confidenceLevel: number
   ): void;
-  
+
   setupSmoothRendering(ctx: CanvasRenderingContext2D): void;
 }
 
@@ -162,14 +152,10 @@ interface TooltipManager {
     currentPrice: number,
     targetPrice: number
   ): void;
-  
+
   hideTooltip(): void;
-  
-  findNearestPoint(
-    mouseX: number,
-    mouseY: number,
-    dataPoints: DataPoint[]
-  ): DataPoint | null;
+
+  findNearestPoint(mouseX: number, mouseY: number, dataPoints: DataPoint[]): DataPoint | null;
 }
 
 interface DataPoint {
@@ -199,7 +185,7 @@ type DeviceType = 'mobile' | 'tablet' | 'desktop';
 const BREAKPOINTS = {
   mobile: { max: 767 },
   tablet: { min: 768, max: 1023 },
-  desktop: { min: 1024 }
+  desktop: { min: 1024 },
 } as const;
 ```
 
@@ -208,30 +194,30 @@ const BREAKPOINTS = {
 ```typescript
 const TIMEFRAME_CONFIGS: Record<TimeFrame, TimeframeConfig> = {
   '30min': {
-    mobile: { interval: 10 * 60 * 1000, maxLabels: 4 },    // 10min intervals, max 4 labels
-    tablet: { interval: 5 * 60 * 1000, maxLabels: 6 },     // 5min intervals, max 6 labels  
-    desktop: { interval: 5 * 60 * 1000, maxLabels: 8 }     // 5min intervals, max 8 labels
+    mobile: { interval: 10 * 60 * 1000, maxLabels: 4 }, // 10min intervals, max 4 labels
+    tablet: { interval: 5 * 60 * 1000, maxLabels: 6 }, // 5min intervals, max 6 labels
+    desktop: { interval: 5 * 60 * 1000, maxLabels: 8 }, // 5min intervals, max 8 labels
   },
   '1hour': {
-    mobile: { interval: 20 * 60 * 1000, maxLabels: 4 },    // 20min intervals
-    tablet: { interval: 15 * 60 * 1000, maxLabels: 6 },    // 15min intervals
-    desktop: { interval: 10 * 60 * 1000, maxLabels: 8 }    // 10min intervals
+    mobile: { interval: 20 * 60 * 1000, maxLabels: 4 }, // 20min intervals
+    tablet: { interval: 15 * 60 * 1000, maxLabels: 6 }, // 15min intervals
+    desktop: { interval: 10 * 60 * 1000, maxLabels: 8 }, // 10min intervals
   },
   '2hours': {
-    mobile: { interval: 60 * 60 * 1000, maxLabels: 3 },    // 1hr intervals
-    tablet: { interval: 30 * 60 * 1000, maxLabels: 5 },    // 30min intervals
-    desktop: { interval: 30 * 60 * 1000, maxLabels: 6 }    // 30min intervals
+    mobile: { interval: 60 * 60 * 1000, maxLabels: 3 }, // 1hr intervals
+    tablet: { interval: 30 * 60 * 1000, maxLabels: 5 }, // 30min intervals
+    desktop: { interval: 30 * 60 * 1000, maxLabels: 6 }, // 30min intervals
   },
   '6hours': {
     mobile: { interval: 3 * 60 * 60 * 1000, maxLabels: 3 }, // 3hr intervals
     tablet: { interval: 2 * 60 * 60 * 1000, maxLabels: 4 }, // 2hr intervals
-    desktop: { interval: 1 * 60 * 60 * 1000, maxLabels: 7 } // 1hr intervals
+    desktop: { interval: 1 * 60 * 60 * 1000, maxLabels: 7 }, // 1hr intervals
   },
   '12hours': {
     mobile: { interval: 6 * 60 * 60 * 1000, maxLabels: 3 }, // 6hr intervals
     tablet: { interval: 4 * 60 * 60 * 1000, maxLabels: 4 }, // 4hr intervals
-    desktop: { interval: 2 * 60 * 60 * 1000, maxLabels: 7 } // 2hr intervals
-  }
+    desktop: { interval: 2 * 60 * 60 * 1000, maxLabels: 7 }, // 2hr intervals
+  },
 };
 ```
 
@@ -245,20 +231,24 @@ interface PaddingConfig {
   left: number;
 }
 
-const calculateDynamicPadding = (width: number, height: number, deviceType: DeviceType): PaddingConfig => {
+const calculateDynamicPadding = (
+  width: number,
+  height: number,
+  deviceType: DeviceType
+): PaddingConfig => {
   const basePadding = {
     mobile: { top: 20, right: 15, bottom: 40, left: 50 },
     tablet: { top: 30, right: 20, bottom: 50, left: 60 },
-    desktop: { top: 40, right: 25, bottom: 60, left: 70 }
+    desktop: { top: 40, right: 25, bottom: 60, left: 70 },
   };
-  
+
   // Adjust based on actual dimensions
   const config = basePadding[deviceType];
   return {
     top: Math.max(config.top, height * 0.05),
     right: Math.max(config.right, width * 0.03),
     bottom: Math.max(config.bottom, height * 0.12),
-    left: Math.max(config.left, width * 0.08)
+    left: Math.max(config.left, width * 0.08),
   };
 };
 ```
@@ -272,16 +262,19 @@ interface AxisRange {
   padding: number;
 }
 
-const calculateOptimalAxisRange = (dataPoints: number[], paddingPercent: number = 0.75): AxisRange => {
+const calculateOptimalAxisRange = (
+  dataPoints: number[],
+  paddingPercent: number = 0.75
+): AxisRange => {
   const min = Math.min(...dataPoints);
   const max = Math.max(...dataPoints);
   const range = max - min;
   const padding = range * (paddingPercent / 100);
-  
+
   return {
     min: min - padding,
     max: max + padding,
-    padding: paddingPercent
+    padding: paddingPercent,
   };
 };
 ```
@@ -292,19 +285,19 @@ const calculateOptimalAxisRange = (dataPoints: number[], paddingPercent: number 
 const setupHiDPICanvas = (canvas: HTMLCanvasElement): CanvasRenderingContext2D => {
   const ctx = canvas.getContext('2d')!;
   const devicePixelRatio = window.devicePixelRatio || 1;
-  
+
   // Scale canvas for crisp rendering
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * devicePixelRatio;
   canvas.height = rect.height * devicePixelRatio;
-  
+
   // Scale context to match device pixel ratio
   ctx.scale(devicePixelRatio, devicePixelRatio);
-  
+
   // Set canvas CSS size to maintain layout
   canvas.style.width = rect.width + 'px';
   canvas.style.height = rect.height + 'px';
-  
+
   return ctx;
 };
 ```
@@ -325,25 +318,28 @@ const setupSmoothRendering = (ctx: CanvasRenderingContext2D): void => {
 ### Label Collision Resolution
 
 ```typescript
-const resolveLabelCollisions = (labels: TimeLabelConfig[], minDistance: number): TimeLabelConfig[] => {
+const resolveLabelCollisions = (
+  labels: TimeLabelConfig[],
+  minDistance: number
+): TimeLabelConfig[] => {
   // Sort by priority (high priority labels are kept)
   const sortedLabels = [...labels].sort((a, b) => {
     const priorityOrder = { high: 3, medium: 2, low: 1 };
     return priorityOrder[b.priority] - priorityOrder[a.priority];
   });
-  
+
   const resolvedLabels: TimeLabelConfig[] = [];
-  
+
   for (const label of sortedLabels) {
-    const hasCollision = resolvedLabels.some(existing => 
-      Math.abs(existing.x - label.x) < minDistance
+    const hasCollision = resolvedLabels.some(
+      existing => Math.abs(existing.x - label.x) < minDistance
     );
-    
+
     if (!hasCollision) {
       resolvedLabels.push(label);
     }
   }
-  
+
   return resolvedLabels.sort((a, b) => a.x - b.x);
 };
 ```
@@ -353,7 +349,7 @@ const resolveLabelCollisions = (labels: TimeLabelConfig[], minDistance: number):
 ```typescript
 const handleTooltipErrors = (error: Error, fallbackData: Partial<TooltipData>): void => {
   console.warn('Tooltip rendering failed:', error);
-  
+
   // Show simplified tooltip with available data
   if (fallbackData.price && fallbackData.timestamp) {
     showSimpleTooltip(fallbackData.price, fallbackData.timestamp);
@@ -388,11 +384,13 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 ### Unit Tests
 
 1. **Label Calculation Tests**
+
    - Test optimal label calculation for each timeframe/device combination
    - Verify collision detection algorithms
    - Test edge cases (very narrow screens, very wide screens)
 
 2. **Responsive Behavior Tests**
+
    - Test device type detection at various breakpoints
    - Verify padding calculations across different screen sizes
    - Test font size scaling
@@ -405,6 +403,7 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 ### Integration Tests
 
 1. **Canvas Rendering Tests**
+
    - Test complete chart rendering on different screen sizes
    - Verify label positioning accuracy
    - Test chart updates when switching timeframes
@@ -412,6 +411,7 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
    - Verify smooth line rendering with rounded caps/joins
 
 2. **Interactive Feature Tests**
+
    - Test tooltip positioning and content accuracy
    - Verify "Now" marker positioning and visibility
    - Test confidence band rendering with various data sets
@@ -426,6 +426,7 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 ### Visual Regression Tests
 
 1. **Screenshot Comparisons**
+
    - Capture charts at different breakpoints
    - Test all timeframe combinations
    - Verify consistent styling across devices
@@ -438,6 +439,7 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 ### Manual Testing Scenarios
 
 1. **Mobile Device Testing**
+
    - Test on actual mobile devices (iOS/Android)
    - Verify touch interactions don't interfere with labels
    - Test landscape/portrait orientation changes
@@ -450,26 +452,31 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 ## Implementation Phases
 
 ### Phase 1: Responsive Foundation
+
 - Implement device detection and breakpoint system
 - Create dynamic padding calculation
 - Add responsive font sizing
 
-### Phase 2: Intelligent Label Management  
+### Phase 2: Intelligent Label Management
+
 - Implement timeframe-specific interval calculation
 - Add label collision detection and resolution
 - Create priority-based label removal system
 
 ### Phase 3: Enhanced Formatting
+
 - Improve price label formatting for different currencies
 - Add adaptive decimal place handling
 - Implement smart label truncation
 
 ### Phase 4: Performance Optimization
+
 - Add debounced resize handling
 - Implement efficient canvas redraw strategies
 - Optimize label calculation algorithms
 
 ### Phase 5: Visual Enhancements
+
 - Implement "Now" marker with timestamp label
 - Add confidence band rendering for predictions
 - Setup HiDPI canvas optimization
@@ -477,12 +484,14 @@ const setupCanvasWithFallback = (canvas: HTMLCanvasElement): CanvasRenderingCont
 - Optimize axis range padding (0.5-1.0% based on data range)
 
 ### Phase 6: Interactive Features
+
 - Implement hover tooltip system
 - Add nearest point detection algorithm
 - Display timestamp, price, current and target values in tooltips
 - Handle tooltip positioning edge cases
 
 ### Phase 7: Accessibility & Polish
+
 - Add screen reader support
 - Implement keyboard navigation
 - Add high contrast mode support

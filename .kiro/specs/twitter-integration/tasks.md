@@ -2,7 +2,7 @@
 
 console log:
 
-D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159  GET <http://localhost:3000/api/twitter-news> 429 (Too Many Requests)
+D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159 GET <http://localhost:3000/api/twitter-news> 429 (Too Many Requests)
 fetchNews @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159
 NewsFeed.useEffect @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:306
 
@@ -60,7 +60,7 @@ NewsFeed.useEffect @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\co
 **Testing**: Playwright optional
 **Files to Modify**: `pages/api/twitter/*.ts`, components
 
-## Task T6: Observability & alerts [x]  
+## Task T6: Observability & alerts [x]
 
 **Requirement**: R5
 **Description**: Structured logs, metrics counters for rate-limit hits, alert threshold config.

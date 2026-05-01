@@ -1,7 +1,8 @@
 # Twitter Integration Requirements
+
 console :
 
-D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159  GET http://localhost:3000/api/twitter-news 429 (Too Many Requests)
+D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159 GET http://localhost:3000/api/twitter-news 429 (Too Many Requests)
 fetchNews @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:159
 NewsFeed.useEffect @ D:\CODE\CODING DIRECTORY\Portfolio Projects\pi-dashboard\components\news-feed.tsx:306
 

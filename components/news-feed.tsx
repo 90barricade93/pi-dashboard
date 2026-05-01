@@ -18,6 +18,7 @@ import {
   readCachedTweets,
   writeCachedTweets,
 } from '@/lib/twitter-client-storage';
+import { withViewTransition } from '@/lib/view-transition';
 
 const RATE_LIMIT_FALLBACK_RETRY_MS = 15 * 60 * 1000;
 
@@ -275,7 +276,11 @@ export default function NewsFeed() {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>News</CardTitle>
         <div className="w-full max-w-[300px]">
-          <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            defaultValue="all"
+            onValueChange={value => withViewTransition(() => setActiveTab(value))}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all" className="text-xs">
                 All

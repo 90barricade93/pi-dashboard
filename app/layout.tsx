@@ -4,7 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { MobileNav } from '@/components/mobile-nav';
+import { MobileHeader } from '@/components/mobile-header';
 import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -30,16 +30,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen flex-col">
-            <div className="flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60 md:hidden">
-              <MobileNav />
-              <div className="flex flex-1 justify-center">
-                <div className="relative size-8 overflow-hidden rounded-full bg-linear-to-br from-purple-500 to-indigo-600">
-                  <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
-                    π
-                  </div>
-                </div>
-              </div>
-            </div>
+            <MobileHeader />
             <div className="hidden md:block">
               <Header />
             </div>

@@ -115,37 +115,44 @@ export default function PriceTracker() {
           <PriceCardSkeleton />
         ) : (
           <div className="flex flex-col items-center justify-center p-4">
-            <div className="mb-2 text-4xl font-bold">
-              {currencySymbols[currency]}
-              {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
-            </div>
-
-            {priceChange !== null && (
-              <div
-                className={cn(
-                  'flex items-center text-sm',
-                  priceChange > 0
-                    ? 'text-green-500'
-                    : priceChange < 0
-                      ? 'text-red-500'
-                      : 'text-gray-500'
-                )}
-              >
-                {priceChange > 0 ? (
-                  <ArrowUpRight className="size-4" aria-hidden="true" />
-                ) : priceChange < 0 ? (
-                  <ArrowDownRight className="size-4" aria-hidden="true" />
-                ) : null}
-                <span>
-                  {priceChange > 0 ? '+' : ''}
-                  {priceChange.toFixed(8)}(
-                  {priceChangePercent !== null
-                    ? (priceChangePercent > 0 ? '+' : '') + priceChangePercent.toFixed(2)
-                    : 0}
-                  %)
-                </span>
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="flex flex-col items-center"
+            >
+              <div className="mb-2 text-4xl font-bold">
+                {currencySymbols[currency]}
+                {price?.toFixed(currency === 'JPY' || currency === 'RUB' ? 5 : 6)}
               </div>
-            )}
+
+              {priceChange !== null && (
+                <div
+                  className={cn(
+                    'flex items-center text-sm',
+                    priceChange > 0
+                      ? 'text-green-500'
+                      : priceChange < 0
+                        ? 'text-red-500'
+                        : 'text-gray-500'
+                  )}
+                >
+                  {priceChange > 0 ? (
+                    <ArrowUpRight className="size-4" aria-hidden="true" />
+                  ) : priceChange < 0 ? (
+                    <ArrowDownRight className="size-4" aria-hidden="true" />
+                  ) : null}
+                  <span>
+                    {priceChange > 0 ? '+' : ''}
+                    {priceChange.toFixed(8)}(
+                    {priceChangePercent !== null
+                      ? (priceChangePercent > 0 ? '+' : '') + priceChangePercent.toFixed(2)
+                      : 0}
+                    %)
+                  </span>
+                </div>
+              )}
+            </div>
 
             {error && (
               <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +30,7 @@ export default function NewsFeed() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [twitterDisabled, setTwitterDisabled] = useState(false);
   const [rateLimitResetAt, setRateLimitResetAt] = useState<number | null>(null);
+  const announcedMinutesRef = useRef<number | null>(null);
 
   // Check for stored rate limit status and cached tweets on component mount
   useEffect(() => {
@@ -116,27 +117,31 @@ export default function NewsFeed() {
             errorBody && typeof errorBody === 'object'
               ? (errorBody as Record<string, unknown>)
               : null;
-          const baseMessage = bodyObj && typeof bodyObj['error'] === 'string'
-            ? (bodyObj['error'] as string)
-            : bodyObj && typeof bodyObj['message'] === 'string'
-            ? (bodyObj['message'] as string)
-            : errorText
-            ? `Error: ${errorText}`
-            : 'Could not load Twitter data.';
+          const baseMessage =
+            bodyObj && typeof bodyObj['error'] === 'string'
+              ? (bodyObj['error'] as string)
+              : bodyObj && typeof bodyObj['message'] === 'string'
+                ? (bodyObj['message'] as string)
+                : errorText
+                  ? `Error: ${errorText}`
+                  : 'Could not load Twitter data.';
 
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true);
 
             // Prefer server-provided retryAt; fallback 15 minutes
-            const retryAt = bodyObj && typeof bodyObj['retryAt'] === 'number'
-              ? (bodyObj['retryAt'] as number)
-              : Date.now() + RATE_LIMIT_FALLBACK_RETRY_MS;
+            const retryAt =
+              bodyObj && typeof bodyObj['retryAt'] === 'number'
+                ? (bodyObj['retryAt'] as number)
+                : Date.now() + RATE_LIMIT_FALLBACK_RETRY_MS;
 
             writeRateLimitInfo(retryAt);
 
             setRateLimitResetAt(retryAt);
             const mins = Math.max(1, Math.ceil((retryAt - Date.now()) / (60 * 1000)));
-            setNotice(`Twitter API is rate limited. Will try again in approximately ${mins} minutes.`);
+            setNotice(
+              `Twitter API is rate limited. Will try again in approximately ${mins} minutes.`
+            );
           } else {
             setNotice(baseMessage);
           }
@@ -154,9 +159,7 @@ export default function NewsFeed() {
           allNews = [...twitterNews, ...mockNews];
 
           if (twitterData?.stale) {
-            setNotice(
-              twitterData?.notice || 'Showing cached Twitter data (may be stale).'
-            );
+            setNotice(twitterData?.notice || 'Showing cached Twitter data (may be stale).');
           } else if (twitterData?.fromCache) {
             setNotice('Using cached Twitter data');
           } else if (Array.isArray(twitterData?.data) && twitterData.data.length === 0) {
@@ -208,26 +211,28 @@ export default function NewsFeed() {
   // Live countdown for rate limit window; auto-clear and retry when done
   useEffect(() => {
     if (!twitterDisabled || rateLimitResetAt == null) return;
+    announcedMinutesRef.current = null;
     const tick = () => {
       const remainingMs = rateLimitResetAt - Date.now();
       if (remainingMs <= 0) {
         clearRateLimitInfo();
         setTwitterDisabled(false);
         setRateLimitResetAt(null);
+        announcedMinutesRef.current = null;
         setNotice('Retrying Twitter integration...');
         // trigger immediate retry
         fetchNews();
         return false;
       }
-      const totalSecs = Math.ceil(remainingMs / 1000);
-      const mins = Math.floor(totalSecs / 60);
-      const secs = totalSecs % 60;
-      const minsPart = mins > 0 ? `${mins} minute${mins !== 1 ? 's' : ''}` : '';
-      const secsPart = secs > 0 ? `${secs} second${secs !== 1 ? 's' : ''}` : '';
-      const sep = minsPart && secsPart ? ' ' : '';
-      setNotice(
-        `Twitter API is rate limited. Will try again in approximately ${minsPart}${sep}${secsPart}.`
-      );
+      // Throttle to minute precision so the aria-live region doesn't announce
+      // a new string every second; the wait is on the order of ~15 minutes.
+      const totalMins = Math.max(1, Math.ceil(remainingMs / 60_000));
+      if (announcedMinutesRef.current !== totalMins) {
+        announcedMinutesRef.current = totalMins;
+        setNotice(
+          `Twitter API is rate limited. Will try again in approximately ${totalMins} minute${totalMins !== 1 ? 's' : ''}.`
+        );
+      }
       return true;
     };
     // Run immediately to refresh UI, then every second
@@ -238,7 +243,6 @@ export default function NewsFeed() {
     }, 1000);
     return () => clearInterval(id);
   }, [twitterDisabled, rateLimitResetAt, fetchNews]);
-
 
   const filteredNews =
     activeTab === 'all' ? news : news.filter(item => item.category === activeTab);
@@ -300,8 +304,12 @@ export default function NewsFeed() {
         </div>
 
         {notice && (
-          <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500">
-            <Info className="size-4" />
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-500"
+          >
+            <Info className="size-4" aria-hidden="true" />
             <span>{notice}</span>
           </div>
         )}

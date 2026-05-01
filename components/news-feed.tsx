@@ -5,35 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Twitter, Info, BadgeCheck as CheckVerified } from 'lucide-react';
-import type { RecentSearchResponse, Tweet, User } from '@/lib/twitter-client';
+import type { RecentSearchResponse } from '@/lib/twitter-client';
+import { logger } from '@/lib/logger';
+import { getMockNewsItems, type NewsItem } from '@/lib/news-mock-data';
+import { processTweets } from '@/lib/process-tweets';
+import {
+  NEWS_REFRESH_INTERVAL_MS,
+  TWITTER_CACHE_MAX_AGE_HOURS,
+  readRateLimitInfo,
+  writeRateLimitInfo,
+  clearRateLimitInfo,
+  readCachedTweets,
+  writeCachedTweets,
+} from '@/lib/twitter-client-storage';
 
-interface NewsItem {
-  id: string;
-  title: string;
-  summary: string;
-  source: string;
-  url: string;
-  publishedAt: string;
-  category: 'announcements' | 'community' | 'development' | 'twitter';
-  imageUrl?: string;
-  author?: {
-    name: string;
-    username?: string;
-    profileImageUrl?: string;
-  };
-  metrics?: {
-    likes?: number;
-    retweets?: number;
-    replies?: number;
-  };
-}
-
-// News refresh interval in milliseconds (4 hours)
-const NEWS_REFRESH_INTERVAL = 4 * 60 * 60 * 1000;
-
-// Local storage keys
-const TWITTER_CACHE_KEY = 'twitter-cache';
-const TWITTER_RATE_LIMIT_KEY = 'twitter-rate-limited';
+const RATE_LIMIT_FALLBACK_RETRY_MS = 15 * 60 * 1000;
 
 export default function NewsFeed() {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -48,12 +34,10 @@ export default function NewsFeed() {
   // Check for stored rate limit status and cached tweets on component mount
   useEffect(() => {
     try {
-      // Check rate limit status
-      const storedRateLimitInfo = localStorage.getItem(TWITTER_RATE_LIMIT_KEY);
-      if (storedRateLimitInfo) {
-        const rateLimitInfo = JSON.parse(storedRateLimitInfo);
-        const now = Date.now();
+      const now = Date.now();
 
+      const rateLimitInfo = readRateLimitInfo();
+      if (rateLimitInfo) {
         if (now < rateLimitInfo.resetTime) {
           setTwitterDisabled(true);
           setRateLimitResetAt(rateLimitInfo.resetTime);
@@ -62,38 +46,25 @@ export default function NewsFeed() {
             `Twitter API is rate limited. Will try again in approximately ${timeRemaining} minutes.`
           );
         } else {
-          localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
+          clearRateLimitInfo();
         }
       }
 
-      // Load cached tweets
-      const cachedTwitterData = localStorage.getItem(TWITTER_CACHE_KEY);
-      if (cachedTwitterData) {
-        const { data, timestamp } = JSON.parse(cachedTwitterData);
-        const now = Date.now();
-        const hoursSinceCache = (now - timestamp) / (60 * 60 * 1000);
-
-        // Only use cache if it's less than 4 hours old
-        if (hoursSinceCache < 4) {
-          const twitterNews = processTweets(data);
+      const cached = readCachedTweets();
+      if (cached) {
+        const hoursSinceCache = (now - cached.timestamp) / (60 * 60 * 1000);
+        if (hoursSinceCache < TWITTER_CACHE_MAX_AGE_HOURS) {
+          const twitterNews = processTweets(cached.data);
           setNews(prevNews => {
             const nonTwitterNews = prevNews.filter(item => item.category !== 'twitter');
             return [...twitterNews, ...nonTwitterNews];
           });
           setNotice('Using cached Twitter data');
-          try {
-            if (typeof timestamp === 'number') {
-              setLastUpdated(new Date(timestamp));
-            }
-          } catch {
-            // ignore invalid cached timestamp
-          }
-        } else {
-          localStorage.removeItem(TWITTER_CACHE_KEY);
+          setLastUpdated(new Date(cached.timestamp));
         }
       }
     } catch (e) {
-      console.error('Error checking stored data:', e);
+      logger.error('news_feed_storage_read_failed', { error: String(e) });
     }
   }, []);
 
@@ -108,59 +79,7 @@ export default function NewsFeed() {
     }
 
     // Start with mock news data that's always available
-    const mockNews: NewsItem[] = [
-      {
-        id: '1',
-        title: 'Pi Network Announces New Mainnet Features',
-        summary:
-          'The Pi Core Team has announced several new features coming to the Pi Mainnet, including enhanced security measures and improved transaction speeds.',
-        source: 'Pi Network Blog',
-        url: 'https://minepi.com/blog/example',
-        publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        category: 'announcements',
-      },
-      {
-        id: '2',
-        title: 'Community Spotlight: Pi Hackathon Winners',
-        summary:
-          'Check out the innovative projects that won the recent Pi Network Hackathon, showcasing the creativity and technical skills of the Pi community.',
-        source: 'Pi Community Forum',
-        url: 'https://community.minepi.com/example',
-        publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        category: 'community',
-      },
-      {
-        id: '3',
-        title: 'Pi SDK Update: New Developer Tools Released',
-        summary:
-          'Pi Network has released new developer tools to help build applications on the Pi ecosystem, including improved documentation and testing frameworks.',
-        source: 'Pi Developer Portal',
-        url: 'https://developers.minepi.com/example',
-        publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        category: 'development',
-      },
-      {
-        id: '4',
-        title: 'Pi Network Partners with Major E-commerce Platform',
-        summary:
-          'A new partnership has been announced that will allow Pi cryptocurrency to be used for purchases on a major e-commerce platform, expanding the utility of Pi.',
-        source: 'Crypto News Daily',
-        url: 'https://cryptonews.com/example',
-        publishedAt: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-        category: 'announcements',
-      },
-      {
-        id: '5',
-        title: 'Community-Led Pi Merchant Directory Launches',
-        summary:
-          'A group of Pi pioneers has created a comprehensive directory of merchants accepting Pi as payment, making it easier for users to spend their Pi.',
-        source: 'Pi Community Forum',
-        url: 'https://community.minepi.com/example2',
-        publishedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        category: 'community',
-      },
-    ];
-
+    const mockNews = getMockNewsItems();
     let allNews = [...mockNews];
     let serverSetLastUpdated = false;
 
@@ -188,7 +107,10 @@ export default function NewsFeed() {
           }
 
           // Use warn instead of error to avoid Next.js error overlay for handled states
-          console.warn('Twitter API warning:', errorBody || errorText);
+          logger.warn('news_feed_twitter_api_warning', {
+            status: twitterResponse.status,
+            body: errorBody || errorText,
+          });
 
           const bodyObj =
             errorBody && typeof errorBody === 'object'
@@ -205,15 +127,12 @@ export default function NewsFeed() {
           if (twitterResponse.status === 429) {
             setTwitterDisabled(true);
 
-            // Prefer server-provided retryAt; fallback 15 minutes; last fallback 4 hours
+            // Prefer server-provided retryAt; fallback 15 minutes
             const retryAt = bodyObj && typeof bodyObj['retryAt'] === 'number'
               ? (bodyObj['retryAt'] as number)
-              : Date.now() + 15 * 60 * 1000;
+              : Date.now() + RATE_LIMIT_FALLBACK_RETRY_MS;
 
-            localStorage.setItem(
-              TWITTER_RATE_LIMIT_KEY,
-              JSON.stringify({ timestamp: Date.now(), resetTime: retryAt })
-            );
+            writeRateLimitInfo(retryAt);
 
             setRateLimitResetAt(retryAt);
             const mins = Math.max(1, Math.ceil((retryAt - Date.now()) / (60 * 1000)));
@@ -225,16 +144,9 @@ export default function NewsFeed() {
           const twitterData: RecentSearchResponse = await twitterResponse.json();
 
           // Persist raw payload for debugging and quick reloads
-          localStorage.setItem(
-            TWITTER_CACHE_KEY,
-            JSON.stringify({
-              data: twitterData,
-              // Prefer server-declared lastUpdated if present
-              timestamp:
-                typeof twitterData?.lastUpdated === 'number'
-                  ? twitterData.lastUpdated
-                  : Date.now(),
-            })
+          writeCachedTweets(
+            twitterData,
+            typeof twitterData?.lastUpdated === 'number' ? twitterData.lastUpdated : Date.now()
           );
 
           // Always try to process what we received; this will yield [] if shape is missing
@@ -255,7 +167,7 @@ export default function NewsFeed() {
           }
 
           // Any successful (non-429) response clears local rate limit state
-          localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
+          clearRateLimitInfo();
 
           // Use server-provided lastUpdated when available
           if (typeof twitterData?.lastUpdated === 'number') {
@@ -265,7 +177,7 @@ export default function NewsFeed() {
         }
       } catch (error) {
         // Non-fatal: log as warning and keep the rest of the feed working
-        console.warn('Error fetching Twitter data:', error);
+        logger.warn('news_feed_fetch_twitter_failed', { error: String(error) });
         setNotice(
           `Error loading Twitter data: ${error instanceof Error ? error.message : String(error)}`
         );
@@ -282,73 +194,12 @@ export default function NewsFeed() {
     setLoading(false);
   }, [twitterDisabled]);
 
-  // Process tweets from the X API response
-  const processTweets = (twitterData: RecentSearchResponse): NewsItem[] => {
-    const twitterNews: NewsItem[] = [];
-
-    if (!twitterData.data || !twitterData.includes?.users) {
-      return twitterNews;
-    }
-
-    // Create a map of user IDs to user objects
-    const usersMap = twitterData.includes.users.reduce(
-      (acc: Record<string, User>, user: User) => {
-        if (user && typeof user.id === 'string') {
-          acc[user.id] = user;
-        }
-        return acc;
-      },
-      {} as Record<string, User>
-    );
-
-    // Process each tweet
-    twitterData.data.forEach((tweet: Tweet) => {
-      if (!tweet.author_id) return;
-      const author = usersMap[tweet.author_id];
-      if (!author) return;
-
-      // Create tweet URL
-      const tweetUrl = `https://twitter.com/${author.username}/status/${tweet.id}`;
-
-      // Clean up tweet text (remove URLs if needed)
-      const cleanText = tweet.text;
-
-      // Create news item
-      const pm = tweet.public_metrics;
-      const metrics: NewsItem['metrics'] | undefined = pm
-        ? {
-            ...(pm.like_count !== undefined ? { likes: pm.like_count } : {}),
-            ...(pm.retweet_count !== undefined ? { retweets: pm.retweet_count } : {}),
-            ...(pm.reply_count !== undefined ? { replies: pm.reply_count } : {}),
-          }
-        : undefined;
-
-      twitterNews.push({
-        id: tweet.id,
-        title: `${author.name} (@${author.username})`,
-        summary: cleanText,
-        source: 'X (Twitter)',
-        url: tweetUrl,
-        publishedAt: tweet.created_at ?? new Date().toISOString(),
-        category: 'twitter',
-        author: {
-          name: author.name,
-          ...(author.username ? { username: author.username } : {}),
-          ...(author.profile_image_url ? { profileImageUrl: author.profile_image_url } : {}),
-        },
-        ...(metrics ? { metrics } : {}),
-      });
-    });
-
-    return twitterNews;
-  };
-
   // Initial fetch and setup refresh interval
   useEffect(() => {
     fetchNews();
 
     // Set up periodic refresh
-    const interval = setInterval(fetchNews, NEWS_REFRESH_INTERVAL);
+    const interval = setInterval(fetchNews, NEWS_REFRESH_INTERVAL_MS);
 
     // Clean up interval on component unmount
     return () => clearInterval(interval);
@@ -360,7 +211,7 @@ export default function NewsFeed() {
     const tick = () => {
       const remainingMs = rateLimitResetAt - Date.now();
       if (remainingMs <= 0) {
-        localStorage.removeItem(TWITTER_RATE_LIMIT_KEY);
+        clearRateLimitInfo();
         setTwitterDisabled(false);
         setRateLimitResetAt(null);
         setNotice('Retrying Twitter integration...');

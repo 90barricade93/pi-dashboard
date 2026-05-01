@@ -1,10 +1,27 @@
 import crypto from 'crypto';
+import { logger } from './logger';
 
 interface OKXConfig {
   apiKey: string;
   apiSecret: string;
   passphrase: string;
 }
+
+const CURRENCY_PAIRS: Record<string, string> = {
+  EUR: 'EUR-USDT',
+  GBP: 'GBP-USDT',
+  JPY: 'JPY-USDT',
+  RUB: 'RUB-USDT',
+};
+
+const FALLBACK_RATES: Record<string, number> = {
+  EUR: 0.92,
+  GBP: 0.79,
+  JPY: 150,
+  RUB: 92,
+};
+
+type CandleTuple = [string, string, string, string, string, ...string[]];
 
 export class OKXApiClient {
   private config: OKXConfig;
@@ -35,14 +52,77 @@ export class OKXApiClient {
     return crypto.createHmac('sha256', this.config.apiSecret).update(message).digest('base64');
   }
 
+  private async signedGet<T>(
+    path: string,
+    query: Record<string, string>,
+    timestamp: string,
+    now: number
+  ): Promise<T> {
+    const queryString = new URLSearchParams(query).toString();
+    const signature = this.generateSignature(timestamp, 'GET', path);
+    const response = await fetch(`${this.baseUrl}${path}?${queryString}`, {
+      headers: {
+        'OK-ACCESS-KEY': this.config.apiKey,
+        'OK-ACCESS-SIGN': signature,
+        'OK-ACCESS-TIMESTAMP': timestamp,
+        'OK-ACCESS-PASSPHRASE': this.config.passphrase,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        this.rateLimitedUntil = now + OKXApiClient.RATE_LIMIT_COOLDOWN_MS;
+      }
+      throw new Error(`OKX request failed with status ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  private async getConversionRate(
+    currency: string,
+    timestamp: string,
+    now: number
+  ): Promise<number> {
+    const upper = currency.toUpperCase();
+    const fallback = FALLBACK_RATES[upper] ?? 1;
+    const symbol = CURRENCY_PAIRS[upper];
+    if (!symbol) return fallback;
+
+    const cached = this.conversionCache.get(upper);
+    if (cached && now - cached.timestamp < OKXApiClient.CONV_TTL_MS) {
+      return cached.rate;
+    }
+
+    try {
+      const data = await this.signedGet<{ data?: Array<{ last?: string }> }>(
+        '/market/ticker',
+        { instId: symbol },
+        timestamp,
+        now
+      );
+      const last = parseFloat(data?.data?.[0]?.last ?? '');
+      if (!isNaN(last) && last > 0) {
+        this.conversionCache.set(upper, { rate: last, timestamp: now });
+        return last;
+      }
+      return fallback;
+    } catch {
+      logger.warn('okx_conversion_lookup_failed', { currency: upper });
+      return fallback;
+    }
+  }
+
   async fetchPiPrice(
     currency: string = 'USD'
   ): Promise<{ price: number | null; error: string | null }> {
     try {
       const now = Date.now();
+      const upper = currency.toUpperCase();
+
       // Respect cooldown if recently rate limited
       if (now < this.rateLimitedUntil) {
-        const cached = this.priceCache.get(currency.toUpperCase());
+        const cached = this.priceCache.get(upper);
         if (cached && now - cached.timestamp < OKXApiClient.PRICE_TTL_MS) {
           return { price: cached.price, error: 'Using cached price (rate limited)' };
         }
@@ -50,120 +130,28 @@ export class OKXApiClient {
       }
 
       const timestamp = new Date().toISOString();
-      const path = '/market/ticker';
-      const symbol = 'PI-USDT'; // Pi tegen USDT
-      const signature = this.generateSignature(timestamp, 'GET', path);
+      const data = await this.signedGet<{ data?: Array<{ last: string }> }>(
+        '/market/ticker',
+        { instId: 'PI-USDT' },
+        timestamp,
+        now
+      );
 
-      const response = await fetch(`${this.baseUrl}${path}?instId=${symbol}`, {
-        headers: {
-          'OK-ACCESS-KEY': this.config.apiKey,
-          'OK-ACCESS-SIGN': signature,
-          'OK-ACCESS-TIMESTAMP': timestamp,
-          'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-        },
-      });
-
-      if (!response.ok) {
-        // Apply cooldown on 429s to avoid spamming
-        if (response.status === 429) {
-          this.rateLimitedUntil = now + OKXApiClient.RATE_LIMIT_COOLDOWN_MS;
-        }
-        throw new Error(`API request failed with status ${response.status}`);
+      if (!data?.data?.[0]) {
+        throw new Error('Price data not found');
       }
 
-      const data = await response.json();
+      let price = parseFloat(data.data[0].last);
 
-      if (data?.data?.[0]) {
-        let price = parseFloat(data.data[0].last);
-
-        // Convert to requested currency if not USD
-        if (currency.toUpperCase() !== 'USD') {
-          // Valutaparen mapping voor OKX
-          const currencyPairs: Record<string, string> = {
-            EUR: 'EUR-USDT',
-            GBP: 'GBP-USDT',
-            JPY: 'JPY-USDT',
-            RUB: 'RUB-USDT'
-          };
-
-          // Fallback conversie rates als API faalt
-          const fallbackRates: Record<string, number> = {
-            EUR: 0.92,
-            GBP: 0.79,
-            JPY: 150,
-            RUB: 92
-          };
-
-          try {
-            // Fetch conversion rate from OKX
-            const conversionPath = '/market/ticker';
-            const conversionSymbol = currencyPairs[currency.toUpperCase()];
-            const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
-
-            // Use cached conversion if fresh
-            const cachedConv = this.conversionCache.get(currency.toUpperCase());
-            if (cachedConv && now - cachedConv.timestamp < OKXApiClient.CONV_TTL_MS) {
-              price = price * cachedConv.rate;
-              // cache final price
-              this.priceCache.set(currency.toUpperCase(), { price, timestamp: now });
-              return { price, error: null };
-            }
-
-            const conversionResponse = await fetch(
-              `${this.baseUrl}${conversionPath}?instId=${conversionSymbol}`,
-              {
-                headers: {
-                  'OK-ACCESS-KEY': this.config.apiKey,
-                  'OK-ACCESS-SIGN': conversionSignature,
-                  'OK-ACCESS-TIMESTAMP': timestamp,
-                  'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-                },
-              }
-            );
-
-            if (conversionResponse.ok) {
-              const conversionData = await conversionResponse.json();
-              if (conversionData?.data?.[0]) {
-                const rate = parseFloat(conversionData.data[0].last);
-                if (!isNaN(rate) && rate > 0) {
-                  price = price * rate;
-                  this.conversionCache.set(currency.toUpperCase(), { rate, timestamp: now });
-                } else {
-                  // Als de rate ongeldig is, gebruik fallback
-                  price = price * fallbackRates[currency.toUpperCase()];
-                }
-              } else {
-                // Als er geen data is, gebruik fallback
-                price = price * fallbackRates[currency.toUpperCase()];
-              }
-            } else {
-              if (conversionResponse.status === 429) {
-                this.rateLimitedUntil = now + OKXApiClient.RATE_LIMIT_COOLDOWN_MS;
-              }
-              // Als de API call faalt, gebruik fallback
-              price = price * fallbackRates[currency.toUpperCase()];
-            }
-          } catch {
-            // Non-fatal: keep logs quiet during known rate limits
-            if (process.env['NODE_ENV'] === 'development') {
-              console.warn('Conversion rate lookup failed, using fallback');
-            }
-            // Bij een error, gebruik fallback
-            price = price * fallbackRates[currency.toUpperCase()];
-          }
-        }
-
-        // cache successful price
-        this.priceCache.set(currency.toUpperCase(), { price, timestamp: now });
-        return { price, error: null };
+      if (upper !== 'USD') {
+        const rate = await this.getConversionRate(upper, timestamp, now);
+        price = price * rate;
       }
 
-      throw new Error('Price data not found');
+      this.priceCache.set(upper, { price, timestamp: now });
+      return { price, error: null };
     } catch {
-      // Avoid noisy errors in the console; surface a concise message upstream
-      if (process.env['NODE_ENV'] === 'development') {
-        console.warn('OKX price fetch failed; returning null');
-      }
+      logger.warn('okx_price_fetch_failed', { currency });
       return {
         price: null,
         error: 'Failed to fetch price data from OKX',
@@ -178,12 +166,7 @@ export class OKXApiClient {
   ): Promise<{ data: { prices: [number, number][] } | null; error: string | null }> {
     try {
       const now = Date.now();
-      const timestamp = new Date().toISOString();
-      const path = '/market/candles';
-      const symbol = 'PI-USDT';
-      const signature = this.generateSignature(timestamp, 'GET', path);
-
-      // Use provided granularity or default heuristic
+      const upper = currency.toUpperCase();
       const resolvedBar = bar ?? (days <= 2 ? '1H' : '1D');
 
       // Respect cooldown if rate limited recently; short-circuit with error to let UI fallback
@@ -191,108 +174,30 @@ export class OKXApiClient {
         return { data: null, error: 'Rate limited; try again later' };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}${path}?instId=${symbol}&bar=${resolvedBar}&limit=${days}`,
-        {
-          headers: {
-            'OK-ACCESS-KEY': this.config.apiKey,
-            'OK-ACCESS-SIGN': signature,
-            'OK-ACCESS-TIMESTAMP': timestamp,
-            'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-          },
-        }
+      const timestamp = new Date().toISOString();
+      const data = await this.signedGet<{ data?: CandleTuple[] }>(
+        '/market/candles',
+        { instId: 'PI-USDT', bar: resolvedBar, limit: String(days) },
+        timestamp,
+        now
       );
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          this.rateLimitedUntil = now + OKXApiClient.RATE_LIMIT_COOLDOWN_MS;
-        }
-        throw new Error(`Historical data API request failed with status ${response.status}`);
+      if (!data?.data) {
+        throw new Error('Historical data not found');
       }
 
-      const data = await response.json();
+      let prices: [number, number][] = data.data.map(
+        (candle) => [parseInt(candle[0]), parseFloat(candle[4])] as [number, number]
+      );
 
-      if (data?.data) {
-        // Base prices are in USDT terms. Convert if a different currency is requested.
-        type CandleTuple = [string, string, string, string, string, ...string[]];
-        const raw: CandleTuple[] = data.data as CandleTuple[];
-        let prices = raw.map((candle) => [
-          parseInt(candle[0]), // timestamp
-          parseFloat(candle[4]), // closing price
-        ] as [number, number]);
-
-        if (currency.toUpperCase() !== 'USD') {
-          // Map desired currency to its USDT pair for conversion
-          const currencyPairs: Record<string, string> = {
-            EUR: 'EUR-USDT',
-            GBP: 'GBP-USDT',
-            JPY: 'JPY-USDT',
-            RUB: 'RUB-USDT',
-          };
-
-          const fallbackRates: Record<string, number> = {
-            EUR: 0.92,
-            GBP: 0.79,
-            JPY: 150,
-            RUB: 92,
-          };
-
-          const convSymbol = currencyPairs[currency.toUpperCase()];
-          if (convSymbol) {
-            try {
-              const conversionPath = '/market/ticker';
-              const conversionSignature = this.generateSignature(timestamp, 'GET', conversionPath);
-              // Use cached conversion rate if available
-              const cachedConv = this.conversionCache.get(currency.toUpperCase());
-              if (cachedConv && now - cachedConv.timestamp < OKXApiClient.CONV_TTL_MS) {
-                const rate = cachedConv.rate;
-                prices = prices.map(([ts, p]: [number, number]) => [ts, p * rate] as [number, number]);
-              } else {
-                const conversionResponse = await fetch(
-                `${this.baseUrl}${conversionPath}?instId=${convSymbol}`,
-                {
-                  headers: {
-                    'OK-ACCESS-KEY': this.config.apiKey,
-                    'OK-ACCESS-SIGN': conversionSignature,
-                    'OK-ACCESS-TIMESTAMP': timestamp,
-                    'OK-ACCESS-PASSPHRASE': this.config.passphrase,
-                  },
-                }
-              );
-
-                let rate = fallbackRates[currency.toUpperCase()] ?? 1;
-                if (conversionResponse.ok) {
-                  const conversionData = await conversionResponse.json();
-                  const last = parseFloat(conversionData?.data?.[0]?.last ?? '');
-                  if (!isNaN(last) && last > 0) {
-                    rate = last;
-                    this.conversionCache.set(currency.toUpperCase(), { rate, timestamp: now });
-                  }
-                } else if (conversionResponse.status === 429) {
-                  this.rateLimitedUntil = now + OKXApiClient.RATE_LIMIT_COOLDOWN_MS;
-                }
-
-                prices = prices.map(([ts, p]: [number, number]) => [ts, p * rate] as [number, number]);
-              }
-            } catch {
-              // On any error, fall back to static rate
-              const rate = fallbackRates[currency.toUpperCase()] ?? 1;
-              prices = prices.map(([ts, p]: [number, number]) => [ts, p * rate] as [number, number]);
-            }
-          }
-        }
-
-        return {
-          data: { prices },
-          error: null,
-        };
+      if (upper !== 'USD' && CURRENCY_PAIRS[upper]) {
+        const rate = await this.getConversionRate(upper, timestamp, now);
+        prices = prices.map(([ts, p]) => [ts, p * rate] as [number, number]);
       }
 
-      throw new Error('Historical data not found');
+      return { data: { prices }, error: null };
     } catch {
-      if (process.env['NODE_ENV'] === 'development') {
-        console.warn('OKX historical fetch failed; returning null');
-      }
+      logger.warn('okx_historical_fetch_failed', { currency, days });
       return {
         data: null,
         error: 'Failed to fetch historical data from OKX',

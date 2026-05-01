@@ -7,14 +7,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice } from '@/lib/api-client';
-
-const currencySymbols: Record<Currency, string> = {
-  EUR: '€',
-  USD: '$',
-  GBP: '£',
-  JPY: '¥',
-  RUB: '₽',
-};
+import { logger } from '@/lib/logger';
+import { currencySymbols } from '@/lib/currency-symbols';
+import { PoweredByOkx } from '@/components/powered-by-okx';
+import { PRICE_POLL_INTERVAL_MS } from '@/lib/constants';
 
 export default function PriceTracker() {
   const { currency, setCurrency } = useCurrency();
@@ -48,7 +44,7 @@ export default function PriceTracker() {
         throw new Error('Price data not available');
       }
     } catch (error) {
-      console.error('Error fetching Pi price:', error);
+      logger.error('price_tracker_fetch_failed', { currency, error: String(error) });
       setError('Failed to fetch price data. Using fallback data.');
 
       // Fallback to simulated data if API fails
@@ -75,8 +71,7 @@ export default function PriceTracker() {
   useEffect(() => {
     getPiPrice();
 
-    // Update price every 30 seconds
-    const interval = setInterval(getPiPrice, 30000);
+    const interval = setInterval(getPiPrice, PRICE_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [currency]);
@@ -158,30 +153,7 @@ export default function PriceTracker() {
                 Last updated: {lastUpdated?.toLocaleTimeString()}
               </div>
 
-              <div className="mt-2 flex items-center justify-center text-center text-xs text-muted-foreground">
-                <span>Powered by</span>
-                <a
-                  href="https://www.okx.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-1 flex items-center transition-colors hover:text-foreground"
-                >
-                  OKX
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ml-1 size-3"
-                  >
-                    <path d="M7 17L17 7"></path>
-                    <path d="M7 7h10v10"></path>
-                  </svg>
-                </a>
-              </div>
+              <PoweredByOkx />
             </>
           )}
         </div>

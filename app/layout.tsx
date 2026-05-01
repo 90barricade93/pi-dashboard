@@ -6,6 +6,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { MobileHeader } from '@/components/mobile-header';
 import { Toaster } from '@/components/ui/sonner';
+import { CurrencyProvider } from '@/contexts/currency-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,15 +30,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen flex-col">
-            <MobileHeader />
-            <div className="hidden md:block">
-              <Header />
+          <CurrencyProvider>
+            <div className="flex min-h-screen flex-col">
+              <MobileHeader />
+              <div className="hidden md:block">
+                <Header />
+              </div>
+              <div className="flex-1">{children}</div>
+              <Footer />
             </div>
-            <div className="flex-1">{children}</div>
-            <Footer />
-          </div>
-          <Toaster />
+            <Toaster />
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

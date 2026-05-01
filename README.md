@@ -53,22 +53,26 @@ TWITTER_BEARER_TOKEN=jouw_twitter_token
 ## 🚀 Setup
 
 1. Clone de repository:
+
 ```bash
 git clone https://github.com/yourusername/pi-dashboard.git
 cd pi-dashboard
 ```
 
 2. Installeer dependencies:
+
 ```bash
 npm install
 ```
 
 3. Configureer environment variables:
+
 ```bash
 cp .env.example .env.local
 ```
 
 4. Start de development server:
+
 ```bash
 npm run dev
 ```
@@ -76,12 +80,14 @@ npm run dev
 ## 🧪 Code Kwaliteit & Testing
 
 ### Quality Tools
+
 - 🔍 ESLint voor code linting
 - ✨ Prettier voor code formatting
 - 🐶 Husky voor pre-commit hooks
 - ⚡️ lint-staged voor efficiënte linting
 
 ### Scripts
+
 - `npm run lint`: ESLint check
 - `npm run lint:fix`: ESLint fix
 - `npm run format`: Prettier format

@@ -36,7 +36,7 @@ export interface ChartConfig {
   };
   labelSpacing: {
     minDistance: number; // Minimum pixels between labels
-    maxLabels: number;   // Maximum number of labels to show
+    maxLabels: number; // Maximum number of labels to show
   };
   timeIntervals: Record<TimeFrame, DeviceConfig>;
 }

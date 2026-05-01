@@ -1,6 +1,6 @@
 /**
  * Chart Performance Utilities
- * 
+ *
  * This module provides utilities for performance monitoring and optimization
  * of chart rendering operations, including debounced resize handling and
  * rendering time measurement.
@@ -30,24 +30,29 @@ export class ChartPerformanceMonitor {
   /**
    * Start measuring a chart operation
    */
-  startMeasure(operation: string): (
+  startMeasure(
+    operation: string
+  ): (
     deviceType: 'mobile' | 'tablet' | 'desktop',
     canvasSize: { width: number; height: number }
   ) => PerformanceMetrics {
     const startTime = performance.now();
-    
-    return (deviceType: 'mobile' | 'tablet' | 'desktop', canvasSize: { width: number; height: number }): PerformanceMetrics => {
+
+    return (
+      deviceType: 'mobile' | 'tablet' | 'desktop',
+      canvasSize: { width: number; height: number }
+    ): PerformanceMetrics => {
       const endTime = performance.now();
       const renderTime = endTime - startTime;
-      
+
       const metric: PerformanceMetrics = {
         renderTime,
         timestamp: Date.now(),
         operation,
         deviceType,
-        canvasSize
+        canvasSize,
       };
-      
+
       this.addMetric(metric);
       return metric;
     };
@@ -58,7 +63,7 @@ export class ChartPerformanceMonitor {
    */
   private addMetric(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
-    
+
     // Keep only the most recent metrics
     if (this.metrics.length > this.maxMetricsHistory) {
       this.metrics = this.metrics.slice(-this.maxMetricsHistory);
@@ -69,12 +74,12 @@ export class ChartPerformanceMonitor {
    * Get average render time for a specific operation
    */
   getAverageRenderTime(operation?: string): number {
-    const relevantMetrics = operation 
+    const relevantMetrics = operation
       ? this.metrics.filter(m => m.operation === operation)
       : this.metrics;
-    
+
     if (relevantMetrics.length === 0) return 0;
-    
+
     const totalTime = relevantMetrics.reduce((sum, metric) => sum + metric.renderTime, 0);
     return totalTime / relevantMetrics.length;
   }
@@ -92,8 +97,9 @@ export class ChartPerformanceMonitor {
   isPerformanceDegraded(thresholdMs: number = 500, sampleSize: number = 5): boolean {
     const recentMetrics = this.getLatestMetrics(sampleSize);
     if (recentMetrics.length === 0) return false;
-    
-    const averageTime = recentMetrics.reduce((sum, metric) => sum + metric.renderTime, 0) / recentMetrics.length;
+
+    const averageTime =
+      recentMetrics.reduce((sum, metric) => sum + metric.renderTime, 0) / recentMetrics.length;
     return averageTime > thresholdMs;
   }
 
@@ -122,9 +128,9 @@ export class DebouncedResizeHandler {
       debounceMs: 150,
       maxRenderTime: 500,
       enableMetrics: true,
-      ...options
+      ...options,
     };
-    
+
     this.performanceMonitor = new ChartPerformanceMonitor();
   }
 
@@ -162,22 +168,24 @@ export class DebouncedResizeHandler {
     }
 
     const finishMeasure = this.performanceMonitor.startMeasure('resize-redraw');
-    
+
     try {
       this.callback(entry);
-      
+
       // Determine device type based on width
       const width = entry.contentRect.width;
       const deviceType = width <= 767 ? 'mobile' : width <= 1023 ? 'tablet' : 'desktop';
-      
+
       const metric = finishMeasure(deviceType, {
         width: entry.contentRect.width,
-        height: entry.contentRect.height
+        height: entry.contentRect.height,
       });
 
       // Log warning if render time exceeds threshold
       if (metric.renderTime > this.options.maxRenderTime) {
-        console.warn(`Chart resize render time exceeded threshold: ${metric.renderTime.toFixed(2)}ms (max: ${this.options.maxRenderTime}ms)`);
+        console.warn(
+          `Chart resize render time exceeded threshold: ${metric.renderTime.toFixed(2)}ms (max: ${this.options.maxRenderTime}ms)`
+        );
       }
     } catch (error) {
       console.error('Error during resize callback execution:', error);
@@ -211,19 +219,19 @@ export function useResizeObserver(
   callback: (entry: ResizeObserverEntry) => void,
   options: ResizeHandlerOptions = {}
 ): ChartPerformanceMonitor | null {
-  const [performanceMonitor, setPerformanceMonitor] = React.useState<ChartPerformanceMonitor | null>(null);
+  const [performanceMonitor, setPerformanceMonitor] =
+    React.useState<ChartPerformanceMonitor | null>(null);
   const handlerRef = React.useRef<DebouncedResizeHandler | null>(null);
   const observerRef = React.useRef<ResizeObserver | null>(null);
-  
+
   // Memoize the callback to prevent infinite re-renders
   const stableCallback = React.useCallback(callback, [callback]);
-  
+
   // Memoize the options to prevent infinite re-renders
-  const stableOptions = React.useMemo(() => options, [
-    options.debounceMs,
-    options.maxRenderTime,
-    options.enableMetrics
-  ]);
+  const stableOptions = React.useMemo(
+    () => options,
+    [options.debounceMs, options.maxRenderTime, options.enableMetrics]
+  );
 
   React.useEffect(() => {
     const element = elementRef.current;
@@ -242,7 +250,7 @@ export function useResizeObserver(
         observerRef.current.disconnect();
         observerRef.current = null;
       }
-      
+
       if (handlerRef.current) {
         handlerRef.current.cleanup();
         handlerRef.current = null;
@@ -261,12 +269,12 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   waitMs: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: number | null = null;
-  
+
   return (...args: Parameters<T>) => {
     if (timeoutId !== null) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = window.setTimeout(() => {
       func(...args);
     }, waitMs);
@@ -289,11 +297,11 @@ export class CanvasRedrawManager {
    */
   shouldRedraw(drawParams: unknown): boolean {
     const currentParamsHash = JSON.stringify(drawParams);
-    
+
     if (this.lastDrawParams === currentParamsHash) {
       return false; // No changes, skip redraw
     }
-    
+
     this.lastDrawParams = currentParamsHash;
     return true;
   }
@@ -308,13 +316,13 @@ export class CanvasRedrawManager {
     canvasSize: { width: number; height: number }
   ): PerformanceMetrics {
     const finishMeasure = this.performanceMonitor.startMeasure(operation);
-    
+
     try {
       drawFunction();
     } catch (error) {
       console.error(`Error during canvas draw operation '${operation}':`, error);
     }
-    
+
     return finishMeasure(deviceType, canvasSize);
   }
 

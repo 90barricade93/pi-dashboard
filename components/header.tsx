@@ -33,12 +33,12 @@ function BellIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo and brand */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+            <div className="relative size-8 overflow-hidden rounded-full bg-linear-to-br from-purple-500 to-indigo-600">
               <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>

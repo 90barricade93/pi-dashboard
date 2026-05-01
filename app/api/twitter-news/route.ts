@@ -37,9 +37,7 @@ function normalizeResponse(input: unknown): RecentSearchResponse {
   type DataArray = NonNullable<RecentSearchResponse['data']>;
   type UsersArray = NonNullable<NonNullable<RecentSearchResponse['includes']>['users']>;
 
-  const data: DataArray = Array.isArray(obj['data'])
-    ? (obj['data'] as DataArray)
-    : [];
+  const data: DataArray = Array.isArray(obj['data']) ? (obj['data'] as DataArray) : [];
 
   const includesCandidate = obj['includes'];
   const includesObj: Record<string, unknown> =
@@ -170,7 +168,9 @@ export async function GET() {
       }
 
       // Non-TwitterApiError path
-      logger.error('Unexpected error from TwitterClient', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Unexpected error from TwitterClient', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       recordTwitterApiError();
       if (tweetCache) {
         return NextResponse.json({
@@ -209,7 +209,9 @@ export async function GET() {
     return NextResponse.json(normalized);
   } catch (error) {
     const logger = baseLogger.child({ route: 'api/twitter-news' });
-    logger.error('Error fetching tweets', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Error fetching tweets', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     recordTwitterApiError();
 
     // If we have cached data and encounter an error, return the cached data

@@ -8,7 +8,7 @@ import {
   resolveCollisionsWithReadability,
   validateCollisionResolution,
   type TimeLabelConfig,
-  type CollisionDetectionOptions
+  type CollisionDetectionOptions,
 } from '@/lib/time-label-manager';
 
 describe('Label Collision Resolution System', () => {
@@ -23,13 +23,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime + 1800000, x: 25, text: '10:30', priority: 'low' }, // Collides
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
         { timestamp: mockStartTime + 5400000, x: 125, text: '11:30', priority: 'low' }, // Collides
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
         preserveHighPriority: true,
-        fallbackToKeyPoints: false
+        fallbackToKeyPoints: false,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -51,13 +51,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 900000, x: 30, text: '10:15', priority: 'high' }, // Too close
         { timestamp: mockStartTime + 1800000, x: 60, text: '10:30', priority: 'high' }, // Close
-        { timestamp: mockEndTime, x: 300, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 300, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 80,
         preserveHighPriority: true,
-        fallbackToKeyPoints: false
+        fallbackToKeyPoints: false,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -77,13 +77,13 @@ describe('Label Collision Resolution System', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 40, text: '10:30', priority: 'high' }, // Close but adjustable
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 60,
         preserveHighPriority: true,
-        fallbackToKeyPoints: false
+        fallbackToKeyPoints: false,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -103,13 +103,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime + 900000, x: 20, text: '10:15', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 40, text: '10:30', priority: 'high' },
         { timestamp: mockStartTime + 2700000, x: 60, text: '10:45', priority: 'high' },
-        { timestamp: mockEndTime, x: 80, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 80, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 100, // Very large minimum distance
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -128,13 +128,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' },
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
         { timestamp: mockStartTime + 5400000, x: 150, text: '11:30', priority: 'low' },
-        { timestamp: mockEndTime, x: 400, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 400, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 80,
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -151,13 +151,13 @@ describe('Label Collision Resolution System', () => {
 
     it('should handle single label edge case', () => {
       const labels: TimeLabelConfig[] = [
-        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' }
+        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 100,
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -169,13 +169,13 @@ describe('Label Collision Resolution System', () => {
     it('should return start label when space is too narrow for any labels', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 10, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 10, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -193,14 +193,14 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00:00', priority: 'high' }, // Long text
         { timestamp: mockStartTime + 1800000, x: 40, text: '10:30:00', priority: 'medium' },
         { timestamp: mockStartTime + 3600000, x: 80, text: '11:00:00', priority: 'medium' },
-        { timestamp: mockEndTime, x: 200, text: '16:00:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00:00', priority: 'high' },
       ];
 
       const resolved = resolveCollisionsWithReadability(labels, 200, 30, 12);
 
       // Should consider text width in spacing calculations
       expect(resolved.length).toBeGreaterThanOrEqual(2);
-      
+
       // Should maintain readability spacing
       for (let i = 1; i < resolved.length; i++) {
         const actualDistance = resolved[i].x - resolved[i - 1].x;
@@ -212,7 +212,7 @@ describe('Label Collision Resolution System', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 30, text: '10:30', priority: 'medium' },
-        { timestamp: mockEndTime, x: 60, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 60, text: '16:00', priority: 'high' },
       ];
 
       const resolved = resolveCollisionsWithReadability(labels, 60, 50, 12);
@@ -226,14 +226,14 @@ describe('Label Collision Resolution System', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
-        { timestamp: mockEndTime, x: 400, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 400, text: '16:00', priority: 'high' },
       ];
 
       const resolved = resolveCollisionsWithReadability(labels, 400, 40, 12);
 
       // Should utilize available space effectively
       expect(resolved.length).toBeGreaterThanOrEqual(3);
-      
+
       // Should maintain good distribution
       const totalSpread = resolved[resolved.length - 1].x - resolved[0].x;
       expect(totalSpread).toBeGreaterThan(200); // Good use of space
@@ -246,13 +246,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 30, text: '10:30', priority: 'medium' },
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const resolvedLabels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -267,12 +267,12 @@ describe('Label Collision Resolution System', () => {
     it('should detect remaining collisions in validation', () => {
       const originalLabels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const resolvedLabels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 30, text: '16:00', priority: 'high' } // Too close!
+        { timestamp: mockEndTime, x: 30, text: '16:00', priority: 'high' }, // Too close!
       ];
 
       const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -286,11 +286,11 @@ describe('Label Collision Resolution System', () => {
       const originalLabels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'high' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const resolvedLabels: TimeLabelConfig[] = [
-        { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' } // Lost high priority
+        { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' }, // Lost high priority
       ];
 
       const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -302,10 +302,10 @@ describe('Label Collision Resolution System', () => {
 
     it('should detect excessive label reduction', () => {
       const originalLabels: TimeLabelConfig[] = Array.from({ length: 10 }, (_, i) => ({
-        timestamp: mockStartTime + (i * 600000),
+        timestamp: mockStartTime + i * 600000,
         x: i * 30,
         text: `${10 + Math.floor(i / 6)}:${((i % 6) * 10).toString().padStart(2, '0')}`,
-        priority: 'medium' as const
+        priority: 'medium' as const,
       }));
 
       const resolvedLabels: TimeLabelConfig[] = [originalLabels[0]]; // Only 1 out of 10
@@ -320,12 +320,12 @@ describe('Label Collision Resolution System', () => {
     it('should detect improper label ordering', () => {
       const originalLabels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const resolvedLabels: TimeLabelConfig[] = [
         { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }, // Wrong order
-        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' }
+        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
       ];
 
       const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -350,12 +350,12 @@ describe('Label Collision Resolution System', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 100, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 100, text: '10:30', priority: 'medium' }, // Same position
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -370,12 +370,12 @@ describe('Label Collision Resolution System', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: -50, text: '09:30', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 60,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -388,12 +388,12 @@ describe('Label Collision Resolution System', () => {
     it('should handle very large position values', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-        { timestamp: mockEndTime, x: 10000, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 10000, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -410,13 +410,13 @@ describe('Label Collision Resolution System', () => {
         { timestamp: mockStartTime + 600000, x: 20, text: '10:10', priority: 'low' },
         { timestamp: mockStartTime + 1200000, x: 40, text: '10:20', priority: 'medium' },
         { timestamp: mockStartTime + 1800000, x: 60, text: '10:30', priority: 'high' },
-        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '16:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 70,
         preserveHighPriority: true,
-        fallbackToKeyPoints: false
+        fallbackToKeyPoints: false,
       };
 
       const resolved = detectAndResolveCollisions(labels, options);
@@ -424,9 +424,9 @@ describe('Label Collision Resolution System', () => {
       // Should prioritize high priority labels
       const highPriorityCount = resolved.filter(l => l.priority === 'high').length;
       const totalHighPriority = labels.filter(l => l.priority === 'high').length;
-      
+
       expect(highPriorityCount).toBeGreaterThanOrEqual(Math.min(totalHighPriority, 2));
-      
+
       // Should maintain proper spacing
       for (let i = 1; i < resolved.length; i++) {
         expect(resolved[i].x - resolved[i - 1].x).toBeGreaterThanOrEqual(70);

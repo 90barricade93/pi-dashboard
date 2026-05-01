@@ -53,7 +53,7 @@ export function getLogger(baseContext: Record<string, unknown> = {}): Logger {
     info: (msg, fields) => shouldLog('info') && emit('info', msg, { ...base, ...fields }),
     warn: (msg, fields) => shouldLog('warn') && emit('warn', msg, { ...base, ...fields }),
     error: (msg, fields) => shouldLog('error') && emit('error', msg, { ...base, ...fields }),
-    child: (context) => getLogger({ ...base, ...context }),
+    child: context => getLogger({ ...base, ...context }),
   };
 }
 

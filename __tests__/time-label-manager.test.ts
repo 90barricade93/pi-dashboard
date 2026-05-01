@@ -12,7 +12,7 @@ import {
   validateCollisionResolution,
   type TimeLabelConfig,
   type LabelCalculationOptions,
-  type CollisionDetectionOptions
+  type CollisionDetectionOptions,
 } from '@/lib/time-label-manager';
 import type { DeviceType, TimeFrame } from '@/types/chart-responsive';
 
@@ -26,10 +26,10 @@ describe('Time Label Manager', () => {
     it('should generate appropriate number of labels for mobile 30min timeframe', () => {
       const options: LabelCalculationOptions = {
         startTime: mockStartTime,
-        endTime: mockStartTime + (30 * 60 * 1000), // 30 minutes
+        endTime: mockStartTime + 30 * 60 * 1000, // 30 minutes
         availableWidth: 400, // Mobile width
         timeFrame: '30min',
-        deviceType: 'mobile'
+        deviceType: 'mobile',
       };
 
       const labels = calculateOptimalTimeLabels(options);
@@ -45,13 +45,13 @@ describe('Time Label Manager', () => {
         endTime: mockEndTime,
         availableWidth: mockAvailableWidth,
         timeFrame: '2hours',
-        deviceType: 'mobile'
+        deviceType: 'mobile',
       };
 
       const mobileLabels = calculateOptimalTimeLabels(baseOptions);
       const desktopLabels = calculateOptimalTimeLabels({
         ...baseOptions,
-        deviceType: 'desktop'
+        deviceType: 'desktop',
       });
 
       expect(desktopLabels.length).toBeGreaterThanOrEqual(mobileLabels.length);
@@ -63,17 +63,17 @@ describe('Time Label Manager', () => {
         endTime: mockEndTime,
         availableWidth: mockAvailableWidth,
         timeFrame: '2hours',
-        deviceType: 'desktop'
+        deviceType: 'desktop',
       };
 
       const labels = calculateOptimalTimeLabels(options);
 
       // First label should be at x=0
       expect(labels[0].x).toBe(0);
-      
+
       // Last label should be at x=availableWidth
       expect(labels[labels.length - 1].x).toBe(mockAvailableWidth);
-      
+
       // Labels should be in ascending x order
       for (let i = 1; i < labels.length; i++) {
         expect(labels[i].x).toBeGreaterThan(labels[i - 1].x);
@@ -82,18 +82,18 @@ describe('Time Label Manager', () => {
 
     it('should respect maximum label limits for each timeframe', () => {
       const timeframes: TimeFrame[] = ['30min', '1hour', '2hours', '6hours', '12hours'];
-      
+
       timeframes.forEach(timeFrame => {
         const options: LabelCalculationOptions = {
           startTime: mockStartTime,
-          endTime: mockStartTime + (parseInt(timeFrame) * 60 * 60 * 1000),
+          endTime: mockStartTime + parseInt(timeFrame) * 60 * 60 * 1000,
           availableWidth: mockAvailableWidth,
           timeFrame,
-          deviceType: 'desktop'
+          deviceType: 'desktop',
         };
 
         const labels = calculateOptimalTimeLabels(options);
-        
+
         // Should not exceed reasonable limits (8 is max for desktop)
         expect(labels.length).toBeLessThanOrEqual(8);
       });
@@ -105,7 +105,7 @@ describe('Time Label Manager', () => {
         endTime: mockEndTime,
         availableWidth: 100, // Very narrow
         timeFrame: '2hours',
-        deviceType: 'mobile'
+        deviceType: 'mobile',
       };
 
       const labels = calculateOptimalTimeLabels(options);
@@ -119,7 +119,12 @@ describe('Time Label Manager', () => {
 
   describe('assignLabelPriority', () => {
     it('should assign high priority to start and end times', () => {
-      const startPriority = assignLabelPriority(mockStartTime, mockStartTime, mockEndTime, '2hours');
+      const startPriority = assignLabelPriority(
+        mockStartTime,
+        mockStartTime,
+        mockEndTime,
+        '2hours'
+      );
       const endPriority = assignLabelPriority(mockEndTime, mockStartTime, mockEndTime, '2hours');
 
       expect(startPriority).toBe('high');
@@ -135,7 +140,7 @@ describe('Time Label Manager', () => {
 
     it('should assign medium priority to quarter points', () => {
       const timeRange = mockEndTime - mockStartTime;
-      const quarterTime = mockStartTime + (timeRange * 0.25);
+      const quarterTime = mockStartTime + timeRange * 0.25;
       const priority = assignLabelPriority(quarterTime, mockStartTime, mockEndTime, '2hours');
 
       expect(priority).toBe('medium');
@@ -152,7 +157,7 @@ describe('Time Label Manager', () => {
     });
 
     it('should assign low priority to other times', () => {
-      const randomTime = mockStartTime + (15 * 60 * 1000); // 15 minutes after start
+      const randomTime = mockStartTime + 15 * 60 * 1000; // 15 minutes after start
       const priority = assignLabelPriority(randomTime, mockStartTime, mockEndTime, '2hours');
 
       expect(priority).toBe('low');
@@ -165,21 +170,21 @@ describe('Time Label Manager', () => {
       { timestamp: mockStartTime + 1800000, x: 30, text: '10:30', priority: 'medium' }, // Too close!
       { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
       { timestamp: mockStartTime + 5400000, x: 150, text: '11:30', priority: 'low' },
-      { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+      { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
     ];
 
     it('should detect and resolve collisions', () => {
       const labels = createMockLabels();
       const options: CollisionDetectionOptions = {
         minDistance: 50,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
 
       // Should have fewer labels due to collision resolution
       expect(resolvedLabels.length).toBeLessThan(labels.length);
-      
+
       // High priority labels should be preserved
       const highPriorityCount = resolvedLabels.filter(l => l.priority === 'high').length;
       expect(highPriorityCount).toBe(2); // Start and end
@@ -189,12 +194,12 @@ describe('Time Label Manager', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 20, text: '10:30', priority: 'low' }, // Collides with start
-        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -209,13 +214,13 @@ describe('Time Label Manager', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 900000, x: 10, text: '10:15', priority: 'high' }, // Too close
         { timestamp: mockStartTime + 1800000, x: 20, text: '10:30', priority: 'high' }, // Too close
-        { timestamp: mockEndTime, x: 30, text: '12:00', priority: 'high' } // Too close
+        { timestamp: mockEndTime, x: 30, text: '12:00', priority: 'high' }, // Too close
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -227,7 +232,7 @@ describe('Time Label Manager', () => {
     it('should handle empty label array', () => {
       const labels: TimeLabelConfig[] = [];
       const options: CollisionDetectionOptions = {
-        minDistance: 50
+        minDistance: 50,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -237,10 +242,10 @@ describe('Time Label Manager', () => {
 
     it('should handle single label', () => {
       const labels: TimeLabelConfig[] = [
-        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' }
+        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
       ];
       const options: CollisionDetectionOptions = {
-        minDistance: 50
+        minDistance: 50,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -253,13 +258,13 @@ describe('Time Label Manager', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 900000, x: 25, text: '10:15', priority: 'high' }, // Close to start
         { timestamp: mockStartTime + 1800000, x: 45, text: '10:30', priority: 'high' }, // Close to previous
-        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
         preserveHighPriority: true,
-        fallbackToKeyPoints: false
+        fallbackToKeyPoints: false,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -281,13 +286,13 @@ describe('Time Label Manager', () => {
         { timestamp: mockStartTime + 900000, x: 20, text: '10:15', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 40, text: '10:30', priority: 'medium' },
         { timestamp: mockStartTime + 2700000, x: 60, text: '10:45', priority: 'low' },
-        { timestamp: mockEndTime, x: 80, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 80, text: '12:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 100, // Very large minimum distance
         preserveHighPriority: true,
-        fallbackToKeyPoints: true
+        fallbackToKeyPoints: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -295,7 +300,7 @@ describe('Time Label Manager', () => {
       // Should use advanced fallback strategy
       expect(resolvedLabels.length).toBeLessThanOrEqual(2); // Only start and end can fit
       expect(resolvedLabels[0].x).toBe(0);
-      
+
       if (resolvedLabels.length > 1) {
         expect(resolvedLabels[resolvedLabels.length - 1].x).toBe(80);
       }
@@ -306,12 +311,12 @@ describe('Time Label Manager', () => {
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
         { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'low' }, // Out of order
-        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 40,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -326,12 +331,12 @@ describe('Time Label Manager', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 100, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 100, text: '10:30', priority: 'medium' }, // Same position
-        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
       ];
 
       const options: CollisionDetectionOptions = {
         minDistance: 50,
-        preserveHighPriority: true
+        preserveHighPriority: true,
       };
 
       const resolvedLabels = detectAndResolveCollisions(labels, options);
@@ -381,7 +386,7 @@ describe('Time Label Manager', () => {
       const labels: TimeLabelConfig[] = [
         { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         { timestamp: mockStartTime + 1800000, x: 50, text: '10:30:45', priority: 'medium' }, // Longest
-        { timestamp: mockEndTime, x: 100, text: '12:00', priority: 'high' }
+        { timestamp: mockEndTime, x: 100, text: '12:00', priority: 'high' },
       ];
       const fontSize = 12;
 
@@ -402,7 +407,7 @@ describe('Time Label Manager', () => {
 
     it('should include buffer in calculation', () => {
       const labels: TimeLabelConfig[] = [
-        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' }
+        { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
       ];
       const fontSize = 12;
       const buffer = 16;
@@ -422,7 +427,7 @@ describe('Time Label Manager', () => {
           { timestamp: mockStartTime + 900000, x: 25, text: '10:15', priority: 'medium' },
           { timestamp: mockStartTime + 1800000, x: 45, text: '10:30', priority: 'medium' },
           { timestamp: mockStartTime + 2700000, x: 65, text: '10:45', priority: 'low' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = resolveCollisionsWithReadability(labels, 200, 50, 12);
@@ -441,7 +446,7 @@ describe('Time Label Manager', () => {
         const labels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
           { timestamp: mockStartTime + 1800000, x: 30, text: '10:30', priority: 'medium' },
-          { timestamp: mockEndTime, x: 60, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 60, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = resolveCollisionsWithReadability(labels, 60, 50, 12);
@@ -454,7 +459,7 @@ describe('Time Label Manager', () => {
       it('should calculate minimum distance based on text width', () => {
         const labels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00:00', priority: 'high' }, // Long text
-          { timestamp: mockEndTime, x: 100, text: '12:00:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 100, text: '12:00:00', priority: 'high' },
         ];
 
         const resolvedLabels = resolveCollisionsWithReadability(labels, 200, 30, 12);
@@ -471,13 +476,13 @@ describe('Time Label Manager', () => {
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
           { timestamp: mockStartTime + 1800000, x: 30, text: '10:30', priority: 'medium' },
           { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
           { timestamp: mockStartTime + 3600000, x: 100, text: '11:00', priority: 'medium' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -492,12 +497,12 @@ describe('Time Label Manager', () => {
       it('should detect remaining collisions', () => {
         const originalLabels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-          { timestamp: mockEndTime, x: 30, text: '12:00', priority: 'high' } // Too close!
+          { timestamp: mockEndTime, x: 30, text: '12:00', priority: 'high' }, // Too close!
         ];
 
         const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -511,11 +516,11 @@ describe('Time Label Manager', () => {
         const originalLabels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
           { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'high' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels: TimeLabelConfig[] = [
-          { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' } // Lost high priority
+          { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' }, // Lost high priority
         ];
 
         const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -527,10 +532,10 @@ describe('Time Label Manager', () => {
 
       it('should detect excessive label reduction', () => {
         const originalLabels: TimeLabelConfig[] = Array.from({ length: 10 }, (_, i) => ({
-          timestamp: mockStartTime + (i * 600000), // 10 minute intervals
+          timestamp: mockStartTime + i * 600000, // 10 minute intervals
           x: i * 20,
           text: `10:${i.toString().padStart(2, '0')}`,
-          priority: 'medium' as const
+          priority: 'medium' as const,
         }));
 
         const resolvedLabels: TimeLabelConfig[] = [originalLabels[0]]; // Only 1 out of 10
@@ -545,12 +550,12 @@ describe('Time Label Manager', () => {
       it('should detect improper label ordering', () => {
         const originalLabels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels: TimeLabelConfig[] = [
           { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }, // Wrong order
-          { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' }
+          { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
         ];
 
         const validation = validateCollisionResolution(originalLabels, resolvedLabels, 50);
@@ -564,13 +569,13 @@ describe('Time Label Manager', () => {
       it('should handle space too narrow for any labels', () => {
         const labels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
-          { timestamp: mockEndTime, x: 10, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 10, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = detectAndResolveCollisions(labels, {
           minDistance: 50,
           preserveHighPriority: true,
-          fallbackToKeyPoints: true
+          fallbackToKeyPoints: true,
         });
 
         // Should return at least one label even in extreme constraints
@@ -581,13 +586,13 @@ describe('Time Label Manager', () => {
         const labels: TimeLabelConfig[] = [
           { timestamp: mockStartTime, x: 0, text: '10:00', priority: 'high' },
           { timestamp: mockStartTime + 1800000, x: 20, text: '10:30', priority: 'high' },
-          { timestamp: mockEndTime, x: 40, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 40, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = detectAndResolveCollisions(labels, {
           minDistance: 100, // Very large minimum distance
           preserveHighPriority: true,
-          fallbackToKeyPoints: true
+          fallbackToKeyPoints: true,
         });
 
         // Should keep the start label when space is extremely limited
@@ -602,13 +607,13 @@ describe('Time Label Manager', () => {
           { timestamp: mockStartTime + 900000, x: 25, text: '10:15', priority: 'medium' },
           { timestamp: mockStartTime + 1800000, x: 50, text: '10:30', priority: 'medium' },
           { timestamp: mockStartTime + 2700000, x: 75, text: '10:45', priority: 'low' },
-          { timestamp: mockEndTime, x: 300, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 300, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = detectAndResolveCollisions(labels, {
           minDistance: 80,
           preserveHighPriority: true,
-          fallbackToKeyPoints: true
+          fallbackToKeyPoints: true,
         });
 
         // Should intelligently distribute available labels
@@ -627,19 +632,19 @@ describe('Time Label Manager', () => {
           { timestamp: mockStartTime + 600000, x: 20, text: '10:10', priority: 'low' },
           { timestamp: mockStartTime + 1200000, x: 40, text: '10:20', priority: 'medium' },
           { timestamp: mockStartTime + 1800000, x: 60, text: '10:30', priority: 'high' },
-          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' }
+          { timestamp: mockEndTime, x: 200, text: '12:00', priority: 'high' },
         ];
 
         const resolvedLabels = detectAndResolveCollisions(labels, {
           minDistance: 70,
           preserveHighPriority: true,
-          fallbackToKeyPoints: true
+          fallbackToKeyPoints: true,
         });
 
         // Should prioritize high priority labels
         const highPriorityCount = resolvedLabels.filter(l => l.priority === 'high').length;
         const totalHighPriority = labels.filter(l => l.priority === 'high').length;
-        
+
         expect(highPriorityCount).toBeGreaterThanOrEqual(Math.min(totalHighPriority, 2));
       });
     });
@@ -649,18 +654,18 @@ describe('Time Label Manager', () => {
     it('should handle complete workflow for mobile 6-hour timeframe', () => {
       const options: LabelCalculationOptions = {
         startTime: mockStartTime,
-        endTime: mockStartTime + (6 * 60 * 60 * 1000), // 6 hours
+        endTime: mockStartTime + 6 * 60 * 60 * 1000, // 6 hours
         availableWidth: 375, // iPhone width
         timeFrame: '6hours',
         deviceType: 'mobile',
-        minDistance: 60
+        minDistance: 60,
       };
 
       const labels = calculateOptimalTimeLabels(options);
 
       // Should respect mobile constraints
       expect(labels.length).toBeLessThanOrEqual(3); // Mobile max for 6hours
-      
+
       // Should have proper spacing
       for (let i = 1; i < labels.length; i++) {
         expect(labels[i].x - labels[i - 1].x).toBeGreaterThanOrEqual(options.minDistance!);
@@ -674,11 +679,11 @@ describe('Time Label Manager', () => {
     it('should handle complete workflow for desktop 12-hour timeframe', () => {
       const options: LabelCalculationOptions = {
         startTime: mockStartTime,
-        endTime: mockStartTime + (12 * 60 * 60 * 1000), // 12 hours
+        endTime: mockStartTime + 12 * 60 * 60 * 1000, // 12 hours
         availableWidth: 1200, // Desktop width
         timeFrame: '12hours',
         deviceType: 'desktop',
-        minDistance: 40
+        minDistance: 40,
       };
 
       const labels = calculateOptimalTimeLabels(options);
@@ -690,7 +695,7 @@ describe('Time Label Manager', () => {
       // Should have proper priority distribution
       const priorities = labels.map(l => l.priority);
       expect(priorities).toContain('high');
-      
+
       // Should have start and end labels
       expect(labels[0].x).toBe(0);
       expect(labels[labels.length - 1].x).toBe(1200);
@@ -699,18 +704,18 @@ describe('Time Label Manager', () => {
     it('should adapt to extreme space constraints', () => {
       const options: LabelCalculationOptions = {
         startTime: mockStartTime,
-        endTime: mockStartTime + (12 * 60 * 60 * 1000), // 12 hours
+        endTime: mockStartTime + 12 * 60 * 60 * 1000, // 12 hours
         availableWidth: 150, // Very narrow
         timeFrame: '12hours',
         deviceType: 'mobile',
-        minDistance: 80 // Large minimum distance
+        minDistance: 80, // Large minimum distance
       };
 
       const labels = calculateOptimalTimeLabels(options);
 
       // Should fall back to minimal labels
       expect(labels.length).toBeLessThanOrEqual(3);
-      
+
       // Should still maintain start and end
       expect(labels[0].x).toBe(0);
       expect(labels[labels.length - 1].x).toBe(150);

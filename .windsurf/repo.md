@@ -128,6 +128,7 @@ Repository: pi-dashboard
 - Configs at: `next.config.mjs`, `tailwind.config.ts`, `jest.config.js`, `tsconfig.json`
 
 ---
+
 Appendix
 
 Small tree snapshot:

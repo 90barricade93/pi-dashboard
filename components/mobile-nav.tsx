@@ -24,7 +24,7 @@ export function MobileNav() {
         </SheetDescription>
         <div className="flex items-center justify-between border-b pb-4">
           <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-            <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-indigo-600">
+            <div className="relative size-8 overflow-hidden rounded-full bg-linear-to-br from-purple-500 to-indigo-600">
               <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 π
               </div>

@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { metrics, CTR_TWITTER_RATE_LIMIT_HITS, CTR_TWITTER_API_ERRORS, isRateLimitAlerting } from '@/lib/metrics';
+import {
+  metrics,
+  CTR_TWITTER_RATE_LIMIT_HITS,
+  CTR_TWITTER_API_ERRORS,
+  isRateLimitAlerting,
+} from '@/lib/metrics';
 import { logger } from '@/lib/logger';
 
 export async function GET() {

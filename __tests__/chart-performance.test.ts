@@ -7,7 +7,7 @@ import {
   ChartPerformanceMonitor,
   DebouncedResizeHandler,
   CanvasRedrawManager,
-  debounce
+  debounce,
 } from '@/lib/chart-performance';
 
 // Mock performance.now for consistent testing
@@ -18,8 +18,8 @@ beforeAll(() => {
   Object.defineProperty(global, 'performance', {
     writable: true,
     value: {
-      now: mockPerformanceNow
-    }
+      now: mockPerformanceNow,
+    },
   });
 });
 
@@ -53,9 +53,12 @@ describe('ChartPerformanceMonitor', () => {
 
     it('should calculate average render time correctly', () => {
       mockPerformanceNow
-        .mockReturnValueOnce(0).mockReturnValueOnce(100)  // 100ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(200)  // 200ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(150); // 150ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(100) // 100ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(200) // 200ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(150); // 150ms
 
       const finish1 = monitor.startMeasure('test');
       finish1('desktop', { width: 800, height: 400 });
@@ -72,9 +75,12 @@ describe('ChartPerformanceMonitor', () => {
     it('should detect performance degradation', () => {
       // Add metrics that exceed threshold
       mockPerformanceNow
-        .mockReturnValueOnce(0).mockReturnValueOnce(600)  // 600ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(700)  // 700ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(550); // 550ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(600) // 600ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(700) // 700ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(550); // 550ms
 
       const finish1 = monitor.startMeasure('test');
       finish1('desktop', { width: 800, height: 400 });
@@ -90,9 +96,12 @@ describe('ChartPerformanceMonitor', () => {
 
     it('should not detect degradation with good performance', () => {
       mockPerformanceNow
-        .mockReturnValueOnce(0).mockReturnValueOnce(100)  // 100ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(150)  // 150ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(120); // 120ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(100) // 100ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(150) // 150ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(120); // 120ms
 
       const finish1 = monitor.startMeasure('test');
       finish1('desktop', { width: 800, height: 400 });
@@ -138,7 +147,7 @@ describe('DebouncedResizeHandler', () => {
   describe('Debouncing Behavior', () => {
     it('should debounce resize events', () => {
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       // Trigger multiple resize events quickly
@@ -161,18 +170,18 @@ describe('DebouncedResizeHandler', () => {
       mockPerformanceNow.mockReturnValue(1000);
 
       const entry1 = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       const entry2 = {
-        contentRect: { width: 900, height: 500 }
+        contentRect: { width: 900, height: 500 },
       } as ResizeObserverEntry;
 
       handler.handleResize([entry1]);
-      
+
       // Advance time slightly but not enough to trigger
       jest.advanceTimersByTime(50);
-      
+
       handler.handleResize([entry2]);
 
       // Advance remaining time
@@ -189,7 +198,7 @@ describe('DebouncedResizeHandler', () => {
       const testHandler = new DebouncedResizeHandler(testCallback, { debounceMs: 100 });
 
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       testHandler.handleResize([mockEntry]);
@@ -197,12 +206,12 @@ describe('DebouncedResizeHandler', () => {
 
       const metrics = testHandler.getPerformanceMetrics();
       const latestMetrics = metrics.getLatestMetrics(1);
-      
+
       expect(latestMetrics).toHaveLength(1);
       expect(latestMetrics[0].renderTime).toBeGreaterThanOrEqual(0);
       expect(latestMetrics[0].operation).toBe('resize-redraw');
       expect(latestMetrics[0].deviceType).toBe('desktop');
-      
+
       testHandler.cleanup();
     });
 
@@ -213,7 +222,7 @@ describe('DebouncedResizeHandler', () => {
       });
 
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       handler.handleResize([mockEntry]);
@@ -231,7 +240,7 @@ describe('DebouncedResizeHandler', () => {
   describe('Performance Monitoring', () => {
     it.skip('should warn when render time exceeds threshold', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       // Create a slow callback that will exceed the threshold
       const slowCallback = jest.fn(() => {
         // Simulate slow work by calling performance.now multiple times
@@ -240,13 +249,13 @@ describe('DebouncedResizeHandler', () => {
         }
       });
 
-      const testHandler = new DebouncedResizeHandler(slowCallback, { 
-        debounceMs: 100, 
-        maxRenderTime: 0 // Set very low threshold to ensure warning
+      const testHandler = new DebouncedResizeHandler(slowCallback, {
+        debounceMs: 100,
+        maxRenderTime: 0, // Set very low threshold to ensure warning
       });
 
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       testHandler.handleResize([mockEntry]);
@@ -262,12 +271,12 @@ describe('DebouncedResizeHandler', () => {
     });
 
     it('should not monitor performance when disabled', () => {
-      const handler = new DebouncedResizeHandler(mockCallback, { 
-        enableMetrics: false 
+      const handler = new DebouncedResizeHandler(mockCallback, {
+        enableMetrics: false,
       });
 
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       handler.handleResize([mockEntry]);
@@ -295,7 +304,7 @@ describe('CanvasRedrawManager', () => {
     it('should skip redraw when parameters are unchanged', () => {
       const params = { width: 800, height: 400, data: [1, 2, 3] };
 
-      expect(manager.shouldRedraw(params)).toBe(true);  // First call
+      expect(manager.shouldRedraw(params)).toBe(true); // First call
       expect(manager.shouldRedraw(params)).toBe(false); // Second call with same params
     });
 
@@ -310,12 +319,10 @@ describe('CanvasRedrawManager', () => {
     it('should execute draw function with performance monitoring', () => {
       mockPerformanceNow.mockReturnValueOnce(100).mockReturnValueOnce(150);
 
-      const metric = manager.executeDraw(
-        'test-draw',
-        mockDrawFunction,
-        'desktop',
-        { width: 800, height: 400 }
-      );
+      const metric = manager.executeDraw('test-draw', mockDrawFunction, 'desktop', {
+        width: 800,
+        height: 400,
+      });
 
       expect(mockDrawFunction).toHaveBeenCalledTimes(1);
       expect(metric.renderTime).toBe(50);
@@ -330,12 +337,10 @@ describe('CanvasRedrawManager', () => {
 
       mockPerformanceNow.mockReturnValueOnce(100).mockReturnValueOnce(150);
 
-      const metric = manager.executeDraw(
-        'test-draw',
-        mockDrawFunction,
-        'desktop',
-        { width: 800, height: 400 }
-      );
+      const metric = manager.executeDraw('test-draw', mockDrawFunction, 'desktop', {
+        width: 800,
+        height: 400,
+      });
 
       expect(consoleSpy).toHaveBeenCalledWith(
         "Error during canvas draw operation 'test-draw':",
@@ -389,7 +394,7 @@ describe('debounce utility', () => {
 
     debouncedFn('arg1');
     jest.advanceTimersByTime(50);
-    
+
     debouncedFn('arg2');
     jest.advanceTimersByTime(50);
 
@@ -406,27 +411,30 @@ describe('Performance Requirements', () => {
   describe('Render Time Requirements', () => {
     it('should complete chart rendering within 500ms threshold', () => {
       const monitor = new ChartPerformanceMonitor();
-      
+
       // Reset and setup performance mock
       mockPerformanceNow.mockReset();
       mockPerformanceNow.mockReturnValueOnce(0).mockReturnValueOnce(450); // 450ms
-      
+
       const finishMeasure = monitor.startMeasure('chart-render');
       const metric = finishMeasure('desktop', { width: 1200, height: 600 });
-      
+
       expect(metric.renderTime).toBeLessThan(500);
       expect(metric.operation).toBe('chart-render');
     });
 
     it('should detect when rendering exceeds 500ms threshold', () => {
       const monitor = new ChartPerformanceMonitor();
-      
+
       // Reset and setup performance mock
       mockPerformanceNow.mockReset();
       mockPerformanceNow
-        .mockReturnValueOnce(0).mockReturnValueOnce(600)  // 600ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(550)  // 550ms
-        .mockReturnValueOnce(0).mockReturnValueOnce(520); // 520ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(600) // 600ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(550) // 550ms
+        .mockReturnValueOnce(0)
+        .mockReturnValueOnce(520); // 520ms
 
       const finish1 = monitor.startMeasure('chart-render');
       finish1('desktop', { width: 1200, height: 600 });
@@ -442,14 +450,14 @@ describe('Performance Requirements', () => {
 
     it('should handle different device types with appropriate thresholds', () => {
       const monitor = new ChartPerformanceMonitor();
-      
+
       // Reset and setup performance mock
       mockPerformanceNow.mockReset();
       mockPerformanceNow.mockReturnValueOnce(0).mockReturnValueOnce(400); // 400ms
-      
+
       const finishMeasure = monitor.startMeasure('mobile-chart-render');
       const metric = finishMeasure('mobile', { width: 375, height: 200 });
-      
+
       expect(metric.renderTime).toBeLessThan(500);
       expect(metric.deviceType).toBe('mobile');
     });
@@ -461,15 +469,17 @@ describe('Performance Requirements', () => {
       const handler = new DebouncedResizeHandler(mockCallback, { debounceMs: 150 });
 
       const mockEntry = {
-        contentRect: { width: 800, height: 400 }
+        contentRect: { width: 800, height: 400 },
       } as ResizeObserverEntry;
 
       // Simulate rapid resize events (like dragging window)
       for (let i = 0; i < 10; i++) {
-        handler.handleResize([{
-          ...mockEntry,
-          contentRect: { width: 800 + i * 10, height: 400 }
-        }]);
+        handler.handleResize([
+          {
+            ...mockEntry,
+            contentRect: { width: 800 + i * 10, height: 400 },
+          },
+        ]);
       }
 
       // Should not call callback during rapid events
@@ -477,11 +487,13 @@ describe('Performance Requirements', () => {
 
       // After debounce period, should call once with latest values
       jest.advanceTimersByTime(150);
-      
+
       expect(mockCallback).toHaveBeenCalledTimes(1);
-      expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
-        contentRect: { width: 890, height: 400 }
-      }));
+      expect(mockCallback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentRect: { width: 890, height: 400 },
+        })
+      );
 
       handler.cleanup();
     });

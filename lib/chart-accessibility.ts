@@ -34,15 +34,16 @@ export function generateChartAltText(
     includeDataPoints = true,
     includeAnalysis = true,
     verboseDescription = false,
-    includeNavigation = true
+    includeNavigation = true,
   } = options;
 
   const parts: string[] = [];
 
   // Basic chart description
   const trendText = data.trend === 'up' ? 'upward' : data.trend === 'down' ? 'downward' : 'stable';
-  const confidenceText = data.confidence >= 80 ? 'high' : data.confidence >= 60 ? 'moderate' : 'low';
-  
+  const confidenceText =
+    data.confidence >= 80 ? 'high' : data.confidence >= 60 ? 'moderate' : 'low';
+
   parts.push(
     `Price prediction chart showing ${trendText} trend with ${confidenceText} confidence (${data.confidence}%) over ${data.timeFrame}.`
   );
@@ -50,14 +51,15 @@ export function generateChartAltText(
   // Current state
   if (includeDataPoints) {
     const changeDirection = data.priceChange >= 0 ? 'increase' : 'decrease';
-    const changeText = Math.abs(data.priceChangePercent) >= 0.01 
-      ? `${Math.abs(data.priceChangePercent).toFixed(2)}% ${changeDirection}`
-      : 'minimal change';
+    const changeText =
+      Math.abs(data.priceChangePercent) >= 0.01
+        ? `${Math.abs(data.priceChangePercent).toFixed(2)}% ${changeDirection}`
+        : 'minimal change';
 
     parts.push(
       `Current price: ${formatPriceForAccessibility(data.currentPrice, data.currency)}. ` +
-      `Target price: ${formatPriceForAccessibility(data.targetPrice, data.currency)}. ` +
-      `Predicted ${changeText}.`
+        `Target price: ${formatPriceForAccessibility(data.targetPrice, data.currency)}. ` +
+        `Predicted ${changeText}.`
     );
 
     if (data.historicalDataPoints > 0) {
@@ -74,7 +76,7 @@ export function generateChartAltText(
   if (includeNavigation) {
     parts.push(
       'Use Tab to navigate chart controls. Press Enter or Space to interact with timeframe buttons. ' +
-      'Use arrow keys to explore data points when chart is focused.'
+        'Use arrow keys to explore data points when chart is focused.'
     );
   }
 
@@ -82,7 +84,7 @@ export function generateChartAltText(
   if (verboseDescription) {
     parts.push(
       'This interactive chart displays price prediction data with historical context. ' +
-      'The chart uses visual elements including lines, points, and grid markers to represent price movements over time.'
+        'The chart uses visual elements including lines, points, and grid markers to represent price movements over time.'
     );
   }
 
@@ -94,20 +96,20 @@ export function generateChartAltText(
  */
 export function formatPriceForAccessibility(price: number, currency: string): string {
   const currencyNames: Record<string, string> = {
-    'usd': 'US dollars',
-    'eur': 'euros',
-    'gbp': 'British pounds',
-    'jpy': 'Japanese yen',
-    'cad': 'Canadian dollars',
-    'aud': 'Australian dollars',
-    'chf': 'Swiss francs',
-    'cny': 'Chinese yuan',
-    'inr': 'Indian rupees',
-    'krw': 'South Korean won'
+    usd: 'US dollars',
+    eur: 'euros',
+    gbp: 'British pounds',
+    jpy: 'Japanese yen',
+    cad: 'Canadian dollars',
+    aud: 'Australian dollars',
+    chf: 'Swiss francs',
+    cny: 'Chinese yuan',
+    inr: 'Indian rupees',
+    krw: 'South Korean won',
   };
 
   const currencyName = currencyNames[currency.toLowerCase()] || currency.toUpperCase();
-  
+
   // Format number for speech
   if (price >= 1) {
     return `${price.toFixed(6)} ${currencyName}`;
@@ -128,15 +130,16 @@ export function generateLiveAnnouncement(
   switch (type) {
     case 'timeframe-change':
       return `Chart updated to ${data.timeFrame} timeframe. ${data.trend ? `Showing ${data.trend} trend.` : ''}`;
-    
+
     case 'data-update':
       return `Price data updated. Current price: ${data.currentPrice ? formatPriceForAccessibility(data.currentPrice, data.currency || 'USD') : 'loading'}.`;
-    
+
     case 'trend-change': {
-      const trendText = data.trend === 'up' ? 'upward' : data.trend === 'down' ? 'downward' : 'stable';
+      const trendText =
+        data.trend === 'up' ? 'upward' : data.trend === 'down' ? 'downward' : 'stable';
       return `Trend changed to ${trendText}. Confidence: ${data.confidence}%.`;
     }
-    
+
     default:
       return 'Chart updated.';
   }
@@ -147,7 +150,11 @@ export function generateLiveAnnouncement(
  */
 export class ChartKeyboardNavigator {
   private currentDataPointIndex = 0;
-  private dataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }> = [];
+  private dataPoints: Array<{
+    timestamp: number;
+    price: number;
+    type: 'historical' | 'prediction';
+  }> = [];
   private onDataPointFocus: ((index: number, dataPoint: any) => void) | undefined;
   private onAnnouncement: ((message: string) => void) | undefined;
 
@@ -237,10 +244,11 @@ export class ChartKeyboardNavigator {
       const timeString = date.toLocaleTimeString();
       const dateString = date.toLocaleDateString();
       const typeText = dataPoint.type === 'historical' ? 'Historical' : 'Predicted';
-      
-      const announcement = `${typeText} data point ${this.currentDataPointIndex + 1} of ${this.dataPoints.length}. ` +
+
+      const announcement =
+        `${typeText} data point ${this.currentDataPointIndex + 1} of ${this.dataPoints.length}. ` +
         `Time: ${timeString} on ${dateString}. Price: ${dataPoint.price.toFixed(6)}.`;
-      
+
       this.onAnnouncement(announcement);
     }
   }
@@ -248,7 +256,9 @@ export class ChartKeyboardNavigator {
   /**
    * Update data points when chart data changes
    */
-  updateDataPoints(newDataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>): void {
+  updateDataPoints(
+    newDataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>
+  ): void {
     this.dataPoints = newDataPoints;
     // Reset to first point if current index is out of bounds
     if (this.currentDataPointIndex >= this.dataPoints.length) {
@@ -291,9 +301,11 @@ export class HighContrastManager {
    * Check if high contrast mode is currently active
    */
   isHighContrastMode(): boolean {
-    return this.mediaQuery.matches || 
-           window.matchMedia('(prefers-contrast: high)').matches ||
-           window.matchMedia('(-ms-high-contrast: active)').matches;
+    return (
+      this.mediaQuery.matches ||
+      window.matchMedia('(prefers-contrast: high)').matches ||
+      window.matchMedia('(-ms-high-contrast: active)').matches
+    );
   }
 
   /**
@@ -322,7 +334,7 @@ export class HighContrastManager {
         downTrend: '#ff0000',
         stable: '#00ffff',
         text: '#ffffff',
-        focus: '#ffff00'
+        focus: '#ffff00',
       };
     }
 
@@ -337,7 +349,7 @@ export class HighContrastManager {
       downTrend: '#ef4444',
       stable: '#3b82f6',
       text: '#64748b',
-      focus: '#3b82f6'
+      focus: '#3b82f6',
     };
   }
 
@@ -346,7 +358,7 @@ export class HighContrastManager {
    */
   subscribe(callback: (isHighContrast: boolean) => void): () => void {
     this.callbacks.push(callback);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.callbacks.indexOf(callback);
@@ -369,7 +381,7 @@ export class HighContrastManager {
       // Increase line widths for better visibility
       const currentLineWidth = ctx.lineWidth;
       ctx.lineWidth = Math.max(currentLineWidth, 2);
-      
+
       // Ensure text is readable
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;

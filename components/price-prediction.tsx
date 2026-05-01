@@ -956,7 +956,7 @@ export default function PricePrediction() {
             <ChartSkeleton />
           ) : prediction ? (
             <>
-              <div ref={containerRef} className="relative aspect-[2/1] w-full">
+              <div ref={containerRef} className="relative aspect-2/1 w-full">
                 <DescriptionElement />
                 <canvas
                   ref={canvasRef}
@@ -967,7 +967,7 @@ export default function PricePrediction() {
                   {...accessibility.getChartAriaAttributes()}
                 />
                 {isTransitioning && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-xs">
                     <div className="animate-pulse text-sm text-muted-foreground">
                       Updating chart...
                     </div>

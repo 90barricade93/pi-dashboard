@@ -44,7 +44,7 @@ export function calculateOptimalTimeLabels(options: LabelCalculationOptions): Ti
     timeFrame,
     deviceType,
     fontSize = getOptimalFontSize(deviceType),
-    minDistance = 40
+    minDistance = 40,
   } = options;
 
   // Get timeframe-specific configuration with adaptive intervals
@@ -53,30 +53,30 @@ export function calculateOptimalTimeLabels(options: LabelCalculationOptions): Ti
 
   // Calculate total time range
   const totalTimeRange = endTime - startTime;
-  
+
   // Generate candidate time points based on adaptive interval
   const candidateLabels: TimeLabelConfig[] = [];
-  
+
   // Always include start time (high priority)
   candidateLabels.push({
     timestamp: startTime,
     x: 0,
     text: formatTimeLabel(startTime, timeFrame),
-    priority: 'high'
+    priority: 'high',
   });
 
   // Generate intermediate labels based on timeframe-specific interval
   let currentTime = Math.ceil(startTime / interval) * interval;
   while (currentTime < endTime) {
     const x = ((currentTime - startTime) / totalTimeRange) * availableWidth;
-    
+
     candidateLabels.push({
       timestamp: currentTime,
       x,
       text: formatTimeLabel(currentTime, timeFrame),
-      priority: assignLabelPriority(currentTime, startTime, endTime, timeFrame)
+      priority: assignLabelPriority(currentTime, startTime, endTime, timeFrame),
     });
-    
+
     currentTime += interval;
   }
 
@@ -85,13 +85,13 @@ export function calculateOptimalTimeLabels(options: LabelCalculationOptions): Ti
     timestamp: endTime,
     x: availableWidth,
     text: formatTimeLabel(endTime, timeFrame),
-    priority: 'high'
+    priority: 'high',
   });
 
   // Update x positions for all labels
   const labelsWithPositions = candidateLabels.map(label => ({
     ...label,
-    x: ((label.timestamp - startTime) / totalTimeRange) * availableWidth
+    x: ((label.timestamp - startTime) / totalTimeRange) * availableWidth,
   }));
 
   // Apply intelligent label reduction respecting maximum label limits
@@ -130,13 +130,15 @@ export function assignLabelPriority(
   // Current time (now) is high priority
   const now = Date.now();
   const timeDiffFromNow = Math.abs(timestamp - now);
-  if (timeDiffFromNow < 60000) { // Within 1 minute of now
+  if (timeDiffFromNow < 60000) {
+    // Within 1 minute of now
     return 'high';
   }
 
   // Middle point is high priority for longer timeframes
   if (timeFrame === '6hours' || timeFrame === '12hours') {
-    if (Math.abs(position - 0.5) < 0.1) { // Within 10% of middle
+    if (Math.abs(position - 0.5) < 0.1) {
+      // Within 10% of middle
       return 'high';
     }
   }
@@ -281,7 +283,7 @@ function resolveHighPriorityCollisions(
         // Adjust the current label position
         resolvedLabels.push({
           ...currentLabel,
-          x: compromisePosition
+          x: compromisePosition,
         });
       }
       // If no compromise possible, skip this label (prioritize the earlier one)
@@ -353,17 +355,17 @@ function createAdvancedFallbackLabels(
     // Only start and end fit
     return [
       { ...startLabel, priority: 'high' as LabelPriority },
-      { ...endLabel, priority: 'high' as LabelPriority }
+      { ...endLabel, priority: 'high' as LabelPriority },
     ];
   } else if (maxPossibleLabels === 3) {
     // Start, middle, and end fit
     const middleX = (startLabel.x + endLabel.x) / 2;
     const middleLabel = findClosestLabel(sortedLabels, middleX);
-    
+
     return [
       { ...startLabel, priority: 'high' as LabelPriority },
       { ...middleLabel, x: middleX, priority: 'high' as LabelPriority },
-      { ...endLabel, priority: 'high' as LabelPriority }
+      { ...endLabel, priority: 'high' as LabelPriority },
     ];
   } else {
     // We can fit more labels - use intelligent distribution
@@ -378,7 +380,7 @@ function createAdvancedFallbackLabels(
  * @returns Label closest to target position
  */
 function findClosestLabel(labels: TimeLabelConfig[], targetX: number): TimeLabelConfig {
-  return labels.reduce((closest, current) => 
+  return labels.reduce((closest, current) =>
     Math.abs(current.x - targetX) < Math.abs(closest.x - targetX) ? current : closest
   );
 }
@@ -405,18 +407,18 @@ function createIntelligentDistribution(
   const actualSpacing = Math.max(optimalSpacing, minDistance);
 
   const distributedLabels: TimeLabelConfig[] = [
-    { ...startLabel, priority: 'high' as LabelPriority }
+    { ...startLabel, priority: 'high' as LabelPriority },
   ];
 
   // Distribute labels evenly across the available space
   for (let i = 1; i < maxLabels - 1; i++) {
-    const targetX = startLabel.x + (i * actualSpacing);
+    const targetX = startLabel.x + i * actualSpacing;
     const closestLabel = findClosestLabel(sortedLabels, targetX);
-    
+
     distributedLabels.push({
       ...closestLabel,
       x: targetX,
-      priority: 'high' as LabelPriority
+      priority: 'high' as LabelPriority,
     });
   }
 
@@ -443,7 +445,7 @@ function applyFinalCollisionResolution(
       resolvedLabels.push(label);
     } else {
       const lastLabel = resolvedLabels[resolvedLabels.length - 1];
-      
+
       if (label.x - lastLabel.x >= minDistance) {
         resolvedLabels.push(label);
       } else {
@@ -489,9 +491,7 @@ function hasCollision(
   existingLabels: TimeLabelConfig[],
   minDistance: number
 ): boolean {
-  return existingLabels.some(existing => 
-    Math.abs(existing.x - label.x) < minDistance
-  );
+  return existingLabels.some(existing => Math.abs(existing.x - label.x) < minDistance);
 }
 
 /**
@@ -523,17 +523,18 @@ export function createKeyPointLabels(originalLabels: TimeLabelConfig[]): TimeLab
 
   // Find middle label (closest to center)
   const centerX = (startLabel.x + endLabel.x) / 2;
-  const middleLabel = sortedLabels.reduce((closest, current) => 
+  const middleLabel = sortedLabels.reduce((closest, current) =>
     Math.abs(current.x - centerX) < Math.abs(closest.x - centerX) ? current : closest
   );
 
   return [
     { ...startLabel, priority: 'high' as LabelPriority },
     { ...middleLabel, priority: 'high' as LabelPriority },
-    { ...endLabel, priority: 'high' as LabelPriority }
-  ].filter((label, index, array) => 
-    // Remove duplicates
-    array.findIndex(l => l.timestamp === label.timestamp) === index
+    { ...endLabel, priority: 'high' as LabelPriority },
+  ].filter(
+    (label, index, array) =>
+      // Remove duplicates
+      array.findIndex(l => l.timestamp === label.timestamp) === index
   );
 }
 
@@ -568,7 +569,7 @@ function intelligentLabelReduction(
       // Add medium priority labels first, then low priority
       const additionalLabels = [
         ...mediumPriority.slice(0, Math.max(0, remainingSlots)),
-        ...lowPriority.slice(0, Math.max(0, remainingSlots - mediumPriority.length))
+        ...lowPriority.slice(0, Math.max(0, remainingSlots - mediumPriority.length)),
       ];
 
       optimizedLabels = [...highPriority, ...additionalLabels];
@@ -581,7 +582,7 @@ function intelligentLabelReduction(
   optimizedLabels = detectAndResolveCollisions(optimizedLabels, {
     minDistance,
     preserveHighPriority: true,
-    fallbackToKeyPoints: true
+    fallbackToKeyPoints: true,
   });
 
   return optimizedLabels.sort((a, b) => a.x - b.x);
@@ -601,7 +602,7 @@ function formatTimeLabel(timestamp: number, timeFrame: TimeFrame): string {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     });
   }
 
@@ -610,7 +611,7 @@ function formatTimeLabel(timestamp: number, timeFrame: TimeFrame): string {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     });
   }
 
@@ -619,15 +620,17 @@ function formatTimeLabel(timestamp: number, timeFrame: TimeFrame): string {
   const isToday = date.toDateString() === now.toDateString();
 
   if (isToday) {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      hour12: false
-    }) + ':00';
+    return (
+      date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        hour12: false,
+      }) + ':00'
+    );
   } else {
     // Show date for different days
     return date.toLocaleDateString('en-US', {
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 }
@@ -659,8 +662,8 @@ export function calculateMinimumLabelDistance(
   if (labels.length === 0) return 40; // Default minimum
 
   // Find the longest label text
-  const longestText = labels.reduce((longest, current) => 
-    current.text.length > longest.length ? current.text : longest, 
+  const longestText = labels.reduce(
+    (longest, current) => (current.text.length > longest.length ? current.text : longest),
     ''
   );
 
@@ -686,10 +689,10 @@ export function generateAdaptiveGridIntervals(
   const { interval } = timeConfig;
 
   const gridIntervals: number[] = [];
-  
+
   // Generate grid lines at the same intervals as time labels
   let currentTime = Math.ceil(startTime / interval) * interval;
-  
+
   while (currentTime <= endTime) {
     gridIntervals.push(currentTime);
     currentTime += interval;
@@ -715,16 +718,13 @@ export function resolveCollisionsWithReadability(
   if (labels.length === 0) return [];
 
   // Calculate actual minimum distance based on text width
-  const actualMinDistance = Math.max(
-    minDistance,
-    calculateMinimumLabelDistance(labels, fontSize)
-  );
+  const actualMinDistance = Math.max(minDistance, calculateMinimumLabelDistance(labels, fontSize));
 
   // Use enhanced collision detection
   const collisionOptions: CollisionDetectionOptions = {
     minDistance: actualMinDistance,
     preserveHighPriority: true,
-    fallbackToKeyPoints: true
+    fallbackToKeyPoints: true,
   };
 
   let resolvedLabels = detectAndResolveCollisions(labels, collisionOptions);
@@ -785,26 +785,26 @@ function optimizeForReadability(
   minDistance: number
 ): TimeLabelConfig[] {
   const sortedLabels = [...labels].sort((a, b) => a.x - b.x);
-  
+
   // Calculate maximum labels that can fit with good readability
   const maxReadableLabels = Math.floor(availableWidth / (minDistance * 1.2)) + 1;
-  
+
   if (sortedLabels.length <= maxReadableLabels) {
     return sortedLabels;
   }
 
   // Reduce to most important labels
   const highPriorityLabels = sortedLabels.filter(l => l.priority === 'high');
-  
+
   if (highPriorityLabels.length <= maxReadableLabels) {
     // Add some medium priority labels if space allows
     const mediumPriorityLabels = sortedLabels.filter(l => l.priority === 'medium');
     const remainingSlots = maxReadableLabels - highPriorityLabels.length;
-    
+
     const additionalLabels = mediumPriorityLabels
       .slice(0, remainingSlots)
       .filter(label => !hasCollision(label, highPriorityLabels, minDistance));
-    
+
     return [...highPriorityLabels, ...additionalLabels].sort((a, b) => a.x - b.x);
   }
 
@@ -831,7 +831,7 @@ export function validateCollisionResolution(
   issues: string[];
 } {
   const issues: string[] = [];
-  
+
   // Check for remaining collisions
   const hasCollisions = hasAnyCollisions(resolvedLabels, minDistance);
   if (hasCollisions) {
@@ -842,24 +842,25 @@ export function validateCollisionResolution(
   const originalHighPriority = originalLabels.filter(l => l.priority === 'high').length;
   const resolvedHighPriority = resolvedLabels.filter(l => l.priority === 'high').length;
   const preservedHighPriority = resolvedHighPriority >= Math.min(originalHighPriority, 2);
-  
+
   if (!preservedHighPriority) {
     issues.push('High priority labels were not adequately preserved');
   }
 
   // Calculate reduction ratio
-  const reductionRatio = originalLabels.length > 0 ? resolvedLabels.length / originalLabels.length : 1;
-  
+  const reductionRatio =
+    originalLabels.length > 0 ? resolvedLabels.length / originalLabels.length : 1;
+
   if (reductionRatio < 0.3 && originalLabels.length > 3) {
     issues.push('Excessive label reduction may impact usability');
   }
 
   // Check label ordering
   const sortedResolved = [...resolvedLabels].sort((a, b) => a.x - b.x);
-  const isProperlyOrdered = resolvedLabels.every((label, index) => 
-    label.x === sortedResolved[index].x
+  const isProperlyOrdered = resolvedLabels.every(
+    (label, index) => label.x === sortedResolved[index].x
   );
-  
+
   if (!isProperlyOrdered) {
     issues.push('Labels are not properly ordered by position');
   }
@@ -869,7 +870,7 @@ export function validateCollisionResolution(
     hasCollisions,
     preservedHighPriority,
     reductionRatio,
-    issues
+    issues,
   };
 }
 
@@ -896,11 +897,13 @@ export function calculateTimeframeTransition(
 
   // Calculate transition duration based on complexity change
   const complexityChange = Math.abs(toConfig.maxLabels - fromConfig.maxLabels);
-  const intervalChange = Math.abs(toConfig.interval - fromConfig.interval) / Math.min(toConfig.interval, fromConfig.interval);
+  const intervalChange =
+    Math.abs(toConfig.interval - fromConfig.interval) /
+    Math.min(toConfig.interval, fromConfig.interval);
 
   // Base duration adjusted for device performance
   const baseDuration = deviceType === 'mobile' ? 200 : deviceType === 'tablet' ? 250 : 300;
-  const duration = baseDuration + (complexityChange * 50) + (intervalChange * 100);
+  const duration = baseDuration + complexityChange * 50 + intervalChange * 100;
 
   // Determine if we should animate different elements
   const shouldAnimateLabels = complexityChange > 0 || intervalChange > 0.5;
@@ -913,6 +916,6 @@ export function calculateTimeframeTransition(
     duration: Math.min(duration, 500), // Cap at 500ms for performance
     easing,
     shouldAnimateLabels,
-    shouldAnimateGrid
+    shouldAnimateGrid,
   };
 }

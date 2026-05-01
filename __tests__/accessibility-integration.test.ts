@@ -9,7 +9,7 @@ import {
   ChartKeyboardNavigator,
   HighContrastManager,
   LiveRegionManager,
-  type ChartAccessibilityData
+  type ChartAccessibilityData,
 } from '@/lib/chart-accessibility';
 
 // Mock DOM methods for testing
@@ -39,7 +39,7 @@ Object.defineProperty(document, 'body', {
 describe('Accessibility Integration Tests', () => {
   const mockData: ChartAccessibilityData = {
     currentPrice: 0.314159,
-    targetPrice: 0.325000,
+    targetPrice: 0.325,
     trend: 'up',
     confidence: 75,
     timeFrame: '2 hours',
@@ -49,8 +49,8 @@ describe('Accessibility Integration Tests', () => {
     priceChangePercent: 3.45,
     reasons: [
       'Recent price movement shows bullish momentum',
-      'Technical indicators suggest short-term uptrend'
-    ]
+      'Technical indicators suggest short-term uptrend',
+    ],
   };
 
   describe('Complete accessibility workflow', () => {
@@ -60,7 +60,7 @@ describe('Accessibility Integration Tests', () => {
         includeDataPoints: true,
         includeAnalysis: true,
         includeNavigation: true,
-        verboseDescription: true
+        verboseDescription: true,
       });
 
       expect(altText).toContain('Price prediction chart showing upward trend');
@@ -73,19 +73,19 @@ describe('Accessibility Integration Tests', () => {
       // 2. Test live announcements for dynamic updates
       const timeframeAnnouncement = generateLiveAnnouncement('timeframe-change', {
         timeFrame: '6 hours',
-        trend: 'up'
+        trend: 'up',
       });
       expect(timeframeAnnouncement).toContain('Chart updated to 6 hours timeframe');
 
       const dataUpdateAnnouncement = generateLiveAnnouncement('data-update', {
         currentPrice: 0.314159,
-        currency: 'usd'
+        currency: 'usd',
       });
       expect(dataUpdateAnnouncement).toContain('Price data updated');
 
       const trendChangeAnnouncement = generateLiveAnnouncement('trend-change', {
         trend: 'down',
-        confidence: 68
+        confidence: 68,
       });
       expect(trendChangeAnnouncement).toContain('Trend changed to downward');
 
@@ -93,7 +93,7 @@ describe('Accessibility Integration Tests', () => {
       const dataPoints = [
         { timestamp: 1000, price: 0.31, type: 'historical' as const },
         { timestamp: 2000, price: 0.32, type: 'historical' as const },
-        { timestamp: 3000, price: 0.33, type: 'prediction' as const }
+        { timestamp: 3000, price: 0.33, type: 'prediction' as const },
       ];
 
       let currentFocusedPoint: any = null;
@@ -103,9 +103,9 @@ describe('Accessibility Integration Tests', () => {
         onDataPointFocus: (index, dataPoint) => {
           currentFocusedPoint = { index, dataPoint };
         },
-        onAnnouncement: (message) => {
+        onAnnouncement: message => {
           lastAnnouncement = message;
-        }
+        },
       });
 
       // Test navigation
@@ -122,7 +122,7 @@ describe('Accessibility Integration Tests', () => {
       // 4. Test high contrast support
       const highContrastManager = new HighContrastManager();
       const colors = highContrastManager.getHighContrastColors();
-      
+
       expect(colors).toHaveProperty('background');
       expect(colors).toHaveProperty('upTrend');
       expect(colors).toHaveProperty('downTrend');
@@ -132,7 +132,7 @@ describe('Accessibility Integration Tests', () => {
       const mockCtx = {
         lineWidth: 1,
         shadowColor: 'rgba(0,0,0,0.5)',
-        shadowBlur: 5
+        shadowBlur: 5,
       } as any;
 
       highContrastManager.applyHighContrastStyles(mockCtx);
@@ -143,13 +143,13 @@ describe('Accessibility Integration Tests', () => {
         setAttribute: jest.fn(),
         style: {} as any,
         textContent: '',
-        parentNode: document.body
+        parentNode: document.body,
       } as any;
 
       jest.spyOn(document, 'createElement').mockReturnValue(mockElement);
 
       const liveRegionManager = new LiveRegionManager();
-      
+
       liveRegionManager.announcePolite('Test polite message');
       expect(mockElement.textContent).toBe('Test polite message');
 
@@ -179,7 +179,7 @@ describe('Accessibility Integration Tests', () => {
       const testCases = [
         { confidence: 90, expected: 'high' },
         { confidence: 75, expected: 'moderate' },
-        { confidence: 50, expected: 'low' }
+        { confidence: 50, expected: 'low' },
       ];
 
       testCases.forEach(({ confidence, expected }) => {
@@ -195,7 +195,7 @@ describe('Accessibility Integration Tests', () => {
         ...mockData,
         trend: 'stable' as const,
         priceChange: 0.000001,
-        priceChangePercent: 0.0003
+        priceChangePercent: 0.0003,
       };
 
       const altText = generateChartAltText(stableData);
@@ -204,7 +204,7 @@ describe('Accessibility Integration Tests', () => {
       // No historical data
       const noHistoryData = {
         ...mockData,
-        historicalDataPoints: 0
+        historicalDataPoints: 0,
       };
 
       const altTextNoHistory = generateChartAltText(noHistoryData);
@@ -213,7 +213,7 @@ describe('Accessibility Integration Tests', () => {
       // Empty reasons array
       const noReasonsData = {
         ...mockData,
-        reasons: []
+        reasons: [],
       };
 
       const altTextNoReasons = generateChartAltText(noReasonsData, { includeAnalysis: true });
@@ -221,9 +221,7 @@ describe('Accessibility Integration Tests', () => {
     });
 
     it('should support keyboard navigation boundary conditions', () => {
-      const singleDataPoint = [
-        { timestamp: 1000, price: 0.31, type: 'historical' as const }
-      ];
+      const singleDataPoint = [{ timestamp: 1000, price: 0.31, type: 'historical' as const }];
 
       const navigator = new ChartKeyboardNavigator(singleDataPoint);
 
@@ -241,7 +239,8 @@ describe('Accessibility Integration Tests', () => {
     it('should handle high contrast mode detection', () => {
       // Mock high contrast mode active
       (window.matchMedia as jest.Mock).mockImplementation(query => ({
-        matches: query.includes('prefers-contrast: high') || query.includes('-ms-high-contrast: active'),
+        matches:
+          query.includes('prefers-contrast: high') || query.includes('-ms-high-contrast: active'),
         media: query,
         addEventListener: jest.fn(),
         removeEventListener: jest.fn(),
@@ -263,7 +262,7 @@ describe('Accessibility Integration Tests', () => {
       const largeData = {
         ...mockData,
         historicalDataPoints: 1000,
-        reasons: Array(20).fill('Analysis reason')
+        reasons: Array(20).fill('Analysis reason'),
       };
 
       const startTime = performance.now();
@@ -279,13 +278,13 @@ describe('Accessibility Integration Tests', () => {
       const manyDataPoints = Array.from({ length: 100 }, (_, i) => ({
         timestamp: 1000 + i * 1000,
         price: 0.31 + i * 0.001,
-        type: 'historical' as const
+        type: 'historical' as const,
       }));
 
       const navigator = new ChartKeyboardNavigator(manyDataPoints);
 
       const startTime = performance.now();
-      
+
       // Navigate through all points
       for (let i = 0; i < 99; i++) {
         const rightEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });

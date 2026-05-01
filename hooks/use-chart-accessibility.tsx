@@ -10,7 +10,7 @@ import {
   ChartKeyboardNavigator,
   HighContrastManager,
   LiveRegionManager,
-  type AccessibilityOptions
+  type AccessibilityOptions,
 } from '@/lib/chart-accessibility';
 
 interface UseChartAccessibilityOptions {
@@ -24,28 +24,28 @@ interface ChartAccessibilityHook {
   // Alt text generation
   altText: string;
   updateAltText: (data: ChartAccessibilityData) => void;
-  
+
   // Keyboard navigation
   keyboardNavigator: ChartKeyboardNavigator | null;
   handleKeyDown: (event: KeyboardEvent) => boolean;
   currentDataPointIndex: number;
-  
+
   // Live announcements
   announcePolite: (message: string) => void;
   announceAssertive: (message: string) => void;
   announceTimeframeChange: (timeframe: string, trend?: string) => void;
   announceDataUpdate: (currentPrice: number, currency: string) => void;
   announceTrendChange: (trend: 'up' | 'down' | 'stable', confidence: number) => void;
-  
+
   // High contrast mode
   isHighContrastMode: boolean;
   highContrastColors: ReturnType<HighContrastManager['getHighContrastColors']>;
   applyHighContrastStyles: (ctx: CanvasRenderingContext2D) => void;
-  
+
   // Focus management
   chartRef: React.RefObject<HTMLElement>;
   focusChart: () => void;
-  
+
   // ARIA attributes
   getChartAriaAttributes: () => {
     role: string;
@@ -53,10 +53,12 @@ interface ChartAccessibilityHook {
     'aria-describedby'?: string;
     tabIndex: number;
   };
-  
+
   // Cleanup
   cleanup: () => void;
-  setupKeyboardNavigation: (dataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>) => void;
+  setupKeyboardNavigation: (
+    dataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>
+  ) => void;
 }
 
 export function useChartAccessibility(
@@ -66,7 +68,7 @@ export function useChartAccessibility(
     accessibilityOptions = {},
     enableKeyboardNavigation = true,
     enableLiveRegions = true,
-    enableHighContrastDetection = true
+    enableHighContrastDetection = true,
   } = options;
 
   // Refs and state
@@ -75,11 +77,13 @@ export function useChartAccessibility(
   const [currentDataPointIndex, setCurrentDataPointIndex] = useState<number>(0);
   const [isHighContrastMode, setIsHighContrastMode] = useState<boolean>(false);
   const [keyboardNavigator, setKeyboardNavigator] = useState<ChartKeyboardNavigator | null>(null);
-  
+
   // Managers
   const liveRegionManagerRef = useRef<LiveRegionManager | null>(null);
   const highContrastManagerRef = useRef<HighContrastManager | null>(null);
-  const descriptionElementIdRef = useRef<string>(`chart-description-${Math.random().toString(36).substr(2, 9)}`);
+  const descriptionElementIdRef = useRef<string>(
+    `chart-description-${Math.random().toString(36).substr(2, 9)}`
+  );
 
   // Initialize managers
   useEffect(() => {
@@ -91,9 +95,9 @@ export function useChartAccessibility(
     if (enableHighContrastDetection && !highContrastManagerRef.current) {
       highContrastManagerRef.current = new HighContrastManager();
       setIsHighContrastMode(highContrastManagerRef.current.isHighContrastMode());
-      
+
       // Subscribe to high contrast changes
-      unsubscribe = highContrastManagerRef.current.subscribe((isHighContrast) => {
+      unsubscribe = highContrastManagerRef.current.subscribe(isHighContrast => {
         setIsHighContrastMode(isHighContrast);
       });
     }
@@ -104,36 +108,45 @@ export function useChartAccessibility(
   }, [enableLiveRegions, enableHighContrastDetection]);
 
   // Update alt text
-  const updateAltText = useCallback((data: ChartAccessibilityData) => {
-    const newAltText = generateChartAltText(data, accessibilityOptions);
-    setAltText(newAltText);
-  }, [accessibilityOptions]);
+  const updateAltText = useCallback(
+    (data: ChartAccessibilityData) => {
+      const newAltText = generateChartAltText(data, accessibilityOptions);
+      setAltText(newAltText);
+    },
+    [accessibilityOptions]
+  );
 
   // Keyboard navigation setup
-  const setupKeyboardNavigation = useCallback((
-    dataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>
-  ) => {
-    if (!enableKeyboardNavigation) return;
+  const setupKeyboardNavigation = useCallback(
+    (
+      dataPoints: Array<{ timestamp: number; price: number; type: 'historical' | 'prediction' }>
+    ) => {
+      if (!enableKeyboardNavigation) return;
 
-    const navigator = new ChartKeyboardNavigator(dataPoints, {
-      onDataPointFocus: (index, _dataPoint) => {
-        setCurrentDataPointIndex(index);
-      },
-      onAnnouncement: (message) => {
-        if (liveRegionManagerRef.current) {
-          liveRegionManagerRef.current.announcePolite(message);
-        }
-      }
-    });
+      const navigator = new ChartKeyboardNavigator(dataPoints, {
+        onDataPointFocus: (index, _dataPoint) => {
+          setCurrentDataPointIndex(index);
+        },
+        onAnnouncement: message => {
+          if (liveRegionManagerRef.current) {
+            liveRegionManagerRef.current.announcePolite(message);
+          }
+        },
+      });
 
-    setKeyboardNavigator(navigator);
-  }, [enableKeyboardNavigation]);
+      setKeyboardNavigator(navigator);
+    },
+    [enableKeyboardNavigation]
+  );
 
   // Keyboard event handler
-  const handleKeyDown = useCallback((event: KeyboardEvent): boolean => {
-    if (!keyboardNavigator) return false;
-    return keyboardNavigator.handleKeyDown(event);
-  }, [keyboardNavigator]);
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent): boolean => {
+      if (!keyboardNavigator) return false;
+      return keyboardNavigator.handleKeyDown(event);
+    },
+    [keyboardNavigator]
+  );
 
   // Live announcement functions
   const announcePolite = useCallback((message: string) => {
@@ -148,20 +161,32 @@ export function useChartAccessibility(
     }
   }, []);
 
-  const announceTimeframeChange = useCallback((timeframe: string, trend?: string) => {
-    const announcement = generateLiveAnnouncement('timeframe-change', { timeFrame: timeframe, trend: trend as any });
-    announcePolite(announcement);
-  }, [announcePolite]);
+  const announceTimeframeChange = useCallback(
+    (timeframe: string, trend?: string) => {
+      const announcement = generateLiveAnnouncement('timeframe-change', {
+        timeFrame: timeframe,
+        trend: trend as any,
+      });
+      announcePolite(announcement);
+    },
+    [announcePolite]
+  );
 
-  const announceDataUpdate = useCallback((currentPrice: number, currency: string) => {
-    const announcement = generateLiveAnnouncement('data-update', { currentPrice, currency });
-    announcePolite(announcement);
-  }, [announcePolite]);
+  const announceDataUpdate = useCallback(
+    (currentPrice: number, currency: string) => {
+      const announcement = generateLiveAnnouncement('data-update', { currentPrice, currency });
+      announcePolite(announcement);
+    },
+    [announcePolite]
+  );
 
-  const announceTrendChange = useCallback((trend: 'up' | 'down' | 'stable', confidence: number) => {
-    const announcement = generateLiveAnnouncement('trend-change', { trend, confidence });
-    announceAssertive(announcement);
-  }, [announceAssertive]);
+  const announceTrendChange = useCallback(
+    (trend: 'up' | 'down' | 'stable', confidence: number) => {
+      const announcement = generateLiveAnnouncement('trend-change', { trend, confidence });
+      announceAssertive(announcement);
+    },
+    [announceAssertive]
+  );
 
   // High contrast utilities
   const highContrastColors = highContrastManagerRef.current?.getHighContrastColors() || {
@@ -174,7 +199,7 @@ export function useChartAccessibility(
     downTrend: '#ef4444',
     stable: '#3b82f6',
     text: '#64748b',
-    focus: '#3b82f6'
+    focus: '#3b82f6',
   };
 
   const applyHighContrastStyles = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -196,7 +221,7 @@ export function useChartAccessibility(
       role: 'img',
       'aria-label': altText || 'Price prediction chart',
       ...(altText ? { 'aria-describedby': descriptionElementIdRef.current } : {}),
-      tabIndex: 0
+      tabIndex: 0,
     } as { role: string; 'aria-label': string; 'aria-describedby'?: string; tabIndex: number };
   }, [altText]);
 
@@ -231,7 +256,7 @@ export function useChartAccessibility(
     focusChart,
     getChartAriaAttributes,
     setupKeyboardNavigation,
-    cleanup
+    cleanup,
   };
 }
 
@@ -245,11 +270,7 @@ export function useScreenReaderDescription(
   const descriptionElementId = `${elementId}-description`;
 
   const DescriptionElement: React.FC = () => (
-    <div
-      id={descriptionElementId}
-      className="sr-only"
-      aria-hidden="true"
-    >
+    <div id={descriptionElementId} className="sr-only" aria-hidden="true">
       {description}
     </div>
   );

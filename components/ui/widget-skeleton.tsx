@@ -38,7 +38,7 @@ export function StatsCardSkeleton() {
 export function ChartSkeleton() {
   return (
     <>
-      <Skeleton className="aspect-[2/1] w-full" />
+      <Skeleton className="aspect-2/1 w-full" />
       <div className="space-y-2">
         {[0, 1, 2].map(i => (
           <div key={i} className="flex items-center justify-between">

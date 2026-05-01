@@ -5,6 +5,7 @@ Alle belangrijke wijzigingen in dit project worden hier gedocumenteerd.
 ## [1.0.1] - 2024-03-12
 
 ### Toegevoegd
+
 - Code kwaliteit tools:
   - ESLint configuratie voor TypeScript en React
   - Prettier configuratie voor consistente code formatting
@@ -13,6 +14,7 @@ Alle belangrijke wijzigingen in dit project worden hier gedocumenteerd.
 - Type definities voor externe dependencies
 
 ### Gewijzigd
+
 - Twitter API integratie:
   - Aangepast naar minimum van 10 tweets ophalen
   - Filteren naar 3 meest recente tweets
@@ -27,6 +29,7 @@ Alle belangrijke wijzigingen in dit project worden hier gedocumenteerd.
   - Opgelost hydration mismatch issues
 
 ### Fixed
+
 - Twitter API rate limiting errors
 - Hydration mismatch bij number formatting
 - Ontbrekende type definities voor lucide-react
@@ -34,6 +37,7 @@ Alle belangrijke wijzigingen in dit project worden hier gedocumenteerd.
 ## [1.0.0] - 2024-03-01
 
 ### Toegevoegd
+
 - Initiële release
 - Dashboard layout
 - Prijstracking functionaliteit

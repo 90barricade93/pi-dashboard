@@ -6,7 +6,7 @@ import {
   calculateDynamicPadding,
   calculatePaddingWithLabelProtection,
   calculateAdaptivePadding,
-  detectDeviceType
+  detectDeviceType,
 } from '@/lib/chart-responsive';
 
 // Example 1: Basic dynamic padding
@@ -31,11 +31,21 @@ const maxPrice = 123.456789;
 const minPrice = 0.000001;
 
 const protectedMobilePadding = calculatePaddingWithLabelProtection(
-  mobileWidth, mobileHeight, mobileDevice, maxPrice, minPrice, '$'
+  mobileWidth,
+  mobileHeight,
+  mobileDevice,
+  maxPrice,
+  minPrice,
+  '$'
 );
 
 const protectedDesktopPadding = calculatePaddingWithLabelProtection(
-  desktopWidth, desktopHeight, desktopDevice, maxPrice, minPrice, '$'
+  desktopWidth,
+  desktopHeight,
+  desktopDevice,
+  maxPrice,
+  minPrice,
+  '$'
 );
 
 console.log(`Mobile with price protection:`, protectedMobilePadding);
@@ -49,7 +59,7 @@ const adaptivePadding = calculateAdaptivePadding(mobileWidth, mobileHeight, mobi
   currency: '$',
   hasLongPriceLabels: true,
   hasFrequentTimeLabels: true,
-  needsTouchTargets: true
+  needsTouchTargets: true,
 });
 
 console.log(`Mobile with all adaptive features:`, adaptivePadding);
@@ -58,14 +68,19 @@ console.log(`Mobile with all adaptive features:`, adaptivePadding);
 console.log('\n=== Padding Comparison ===');
 const basicPadding = calculateDynamicPadding(600, 400, 'tablet');
 const labelProtectedPadding = calculatePaddingWithLabelProtection(
-  600, 400, 'tablet', 50.123456, 0.001234, '€'
+  600,
+  400,
+  'tablet',
+  50.123456,
+  0.001234,
+  '€'
 );
 const fullAdaptivePadding = calculateAdaptivePadding(600, 400, 'tablet', {
   maxPrice: 50.123456,
   minPrice: 0.001234,
   currency: '€',
   hasLongPriceLabels: true,
-  hasFrequentTimeLabels: true
+  hasFrequentTimeLabels: true,
 });
 
 console.log('Basic padding:', basicPadding);
@@ -79,9 +94,13 @@ const smallCanvasPadding = calculateAdaptivePadding(200, 150, 'mobile', {
   minPrice: 0.000000001,
   currency: '$',
   hasLongPriceLabels: true,
-  needsTouchTargets: true
+  needsTouchTargets: true,
 });
 
 console.log(`Small canvas with extreme values:`, smallCanvasPadding);
-console.log(`Total horizontal padding: ${smallCanvasPadding.left + smallCanvasPadding.right}px (canvas: 200px)`);
-console.log(`Total vertical padding: ${smallCanvasPadding.top + smallCanvasPadding.bottom}px (canvas: 150px)`);
+console.log(
+  `Total horizontal padding: ${smallCanvasPadding.left + smallCanvasPadding.right}px (canvas: 200px)`
+);
+console.log(
+  `Total vertical padding: ${smallCanvasPadding.top + smallCanvasPadding.bottom}px (canvas: 150px)`
+);

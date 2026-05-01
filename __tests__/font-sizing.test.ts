@@ -9,7 +9,7 @@ import {
   calculateFontScalingFactor,
   getElementFontSize,
   isValidFontSize,
-  FONT_SIZE_CONSTRAINTS
+  FONT_SIZE_CONSTRAINTS,
 } from '@/lib/chart-responsive';
 import type { DeviceType, FontContentType, ChartElementType } from '@/types/chart-responsive';
 
@@ -23,7 +23,7 @@ describe('Responsive Font Sizing System', () => {
 
     it('should scale base font size correctly when provided', () => {
       const baseSize = 16;
-      
+
       expect(getOptimalFontSize('mobile', baseSize)).toBe(13); // 16 * 0.8 = 12.8, rounded to 13
       expect(getOptimalFontSize('tablet', baseSize)).toBe(16); // 16 * 1.0 = 16
       expect(getOptimalFontSize('desktop', baseSize)).toBe(19); // 16 * 1.2 = 19.2, rounded to 19
@@ -32,10 +32,10 @@ describe('Responsive Font Sizing System', () => {
     it('should constrain scaled font sizes within bounds', () => {
       const largeFontSize = 30;
       const smallFontSize = 5;
-      
+
       // Should be constrained to maximum
       expect(getOptimalFontSize('desktop', largeFontSize)).toBe(FONT_SIZE_CONSTRAINTS.maximum);
-      
+
       // Should be constrained to minimum
       expect(getOptimalFontSize('mobile', smallFontSize)).toBe(FONT_SIZE_CONSTRAINTS.minimum);
     });
@@ -73,7 +73,7 @@ describe('Responsive Font Sizing System', () => {
     it('should handle small mobile screens appropriately', () => {
       const smallMobileSize = calculateResponsiveFontSize(320, 568, 'mobile');
       const regularMobileSize = calculateResponsiveFontSize(375, 667, 'mobile');
-      
+
       expect(smallMobileSize).toBeLessThanOrEqual(regularMobileSize);
       expect(smallMobileSize).toBeGreaterThanOrEqual(FONT_SIZE_CONSTRAINTS.minimum);
     });
@@ -81,7 +81,7 @@ describe('Responsive Font Sizing System', () => {
     it('should handle large desktop screens appropriately', () => {
       const regularDesktopSize = calculateResponsiveFontSize(1920, 1080, 'desktop');
       const largeDesktopSize = calculateResponsiveFontSize(3840, 2160, 'desktop');
-      
+
       expect(largeDesktopSize).toBeGreaterThanOrEqual(regularDesktopSize);
       expect(largeDesktopSize).toBeLessThanOrEqual(FONT_SIZE_CONSTRAINTS.maximum);
     });
@@ -103,7 +103,7 @@ describe('Responsive Font Sizing System', () => {
   describe('calculateFontScalingFactor', () => {
     it('should return correct scaling factors for different device types', () => {
       const standardDPR = 1.5;
-      
+
       expect(calculateFontScalingFactor(standardDPR, 'mobile')).toBe(0.8);
       expect(calculateFontScalingFactor(standardDPR, 'tablet')).toBe(1.0);
       expect(calculateFontScalingFactor(standardDPR, 'desktop')).toBe(1.2);
@@ -111,15 +111,15 @@ describe('Responsive Font Sizing System', () => {
 
     it('should adjust for high-DPI displays', () => {
       const highDPR = 3.0;
-      
+
       expect(calculateFontScalingFactor(highDPR, 'mobile')).toBeCloseTo(0.88); // 0.8 * 1.1
-      expect(calculateFontScalingFactor(highDPR, 'tablet')).toBeCloseTo(1.1);  // 1.0 * 1.1
+      expect(calculateFontScalingFactor(highDPR, 'tablet')).toBeCloseTo(1.1); // 1.0 * 1.1
       expect(calculateFontScalingFactor(highDPR, 'desktop')).toBeCloseTo(1.32); // 1.2 * 1.1
     });
 
     it('should adjust for low-DPI displays', () => {
       const lowDPR = 1.0;
-      
+
       expect(calculateFontScalingFactor(lowDPR, 'mobile')).toBeCloseTo(0.76); // 0.8 * 0.95
       expect(calculateFontScalingFactor(lowDPR, 'tablet')).toBeCloseTo(0.95); // 1.0 * 0.95
       expect(calculateFontScalingFactor(lowDPR, 'desktop')).toBeCloseTo(1.14); // 1.2 * 0.95
@@ -132,17 +132,32 @@ describe('Responsive Font Sizing System', () => {
 
     it('should return appropriate font sizes for different element types', () => {
       const deviceType: DeviceType = 'tablet';
-      
-      const timeLabelSize = getElementFontSize(deviceType, 'time-labels', screenWidth, screenHeight);
-      const priceLabelSize = getElementFontSize(deviceType, 'price-labels', screenWidth, screenHeight);
-      const gridLabelSize = getElementFontSize(deviceType, 'grid-labels', screenWidth, screenHeight);
+
+      const timeLabelSize = getElementFontSize(
+        deviceType,
+        'time-labels',
+        screenWidth,
+        screenHeight
+      );
+      const priceLabelSize = getElementFontSize(
+        deviceType,
+        'price-labels',
+        screenWidth,
+        screenHeight
+      );
+      const gridLabelSize = getElementFontSize(
+        deviceType,
+        'grid-labels',
+        screenWidth,
+        screenHeight
+      );
       const legendSize = getElementFontSize(deviceType, 'legend', screenWidth, screenHeight);
 
       // Price labels should be the base size
       expect(priceLabelSize).toBeGreaterThan(timeLabelSize);
       expect(priceLabelSize).toBeGreaterThan(gridLabelSize);
       expect(priceLabelSize).toBeGreaterThan(legendSize);
-      
+
       // Grid labels should be smallest
       expect(gridLabelSize).toBeLessThan(timeLabelSize);
       expect(gridLabelSize).toBeLessThan(legendSize);
@@ -150,7 +165,12 @@ describe('Responsive Font Sizing System', () => {
 
     it('should maintain font size constraints for all element types', () => {
       const deviceTypes: DeviceType[] = ['mobile', 'tablet', 'desktop'];
-      const elementTypes: ChartElementType[] = ['time-labels', 'price-labels', 'grid-labels', 'legend'];
+      const elementTypes: ChartElementType[] = [
+        'time-labels',
+        'price-labels',
+        'grid-labels',
+        'legend',
+      ];
 
       deviceTypes.forEach(deviceType => {
         elementTypes.forEach(elementType => {
@@ -184,10 +204,10 @@ describe('Responsive Font Sizing System', () => {
     it('should respect device-specific ranges', () => {
       // Mobile should reject very large fonts
       expect(isValidFontSize(20, 'mobile')).toBe(false);
-      
+
       // Desktop should reject very small fonts
       expect(isValidFontSize(8, 'desktop')).toBe(false);
-      
+
       // Tablet should be in between
       expect(isValidFontSize(16, 'tablet')).toBe(true);
     });
@@ -197,9 +217,13 @@ describe('Responsive Font Sizing System', () => {
     it('should have reasonable constraint values', () => {
       expect(FONT_SIZE_CONSTRAINTS.minimum).toBeGreaterThan(0);
       expect(FONT_SIZE_CONSTRAINTS.maximum).toBeGreaterThan(FONT_SIZE_CONSTRAINTS.minimum);
-      
-      expect(FONT_SIZE_CONSTRAINTS.scaleFactor.mobile).toBeLessThan(FONT_SIZE_CONSTRAINTS.scaleFactor.tablet);
-      expect(FONT_SIZE_CONSTRAINTS.scaleFactor.tablet).toBeLessThan(FONT_SIZE_CONSTRAINTS.scaleFactor.desktop);
+
+      expect(FONT_SIZE_CONSTRAINTS.scaleFactor.mobile).toBeLessThan(
+        FONT_SIZE_CONSTRAINTS.scaleFactor.tablet
+      );
+      expect(FONT_SIZE_CONSTRAINTS.scaleFactor.tablet).toBeLessThan(
+        FONT_SIZE_CONSTRAINTS.scaleFactor.desktop
+      );
     });
   });
 
@@ -208,7 +232,7 @@ describe('Responsive Font Sizing System', () => {
       // Very small screen
       const tinySize = calculateResponsiveFontSize(100, 100, 'mobile');
       expect(tinySize).toBeGreaterThanOrEqual(FONT_SIZE_CONSTRAINTS.minimum);
-      
+
       // Very large screen
       const hugeSize = calculateResponsiveFontSize(5000, 3000, 'desktop');
       expect(hugeSize).toBeLessThanOrEqual(FONT_SIZE_CONSTRAINTS.maximum);
@@ -235,7 +259,7 @@ describe('Responsive Font Sizing System', () => {
       expect(typeof mobileFont).toBe('number');
       expect(typeof tabletFont).toBe('number');
       expect(typeof desktopFont).toBe('number');
-      
+
       expect(mobileFont).toBeLessThan(tabletFont);
       expect(tabletFont).toBeLessThan(desktopFont);
     });

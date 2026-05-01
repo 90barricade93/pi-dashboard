@@ -3,7 +3,11 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useChartAccessibility, useFocusIndicator, useScreenReaderDescription } from '../hooks/use-chart-accessibility';
+import {
+  useChartAccessibility,
+  useFocusIndicator,
+  useScreenReaderDescription,
+} from '../hooks/use-chart-accessibility';
 import type { ChartAccessibilityData } from '../lib/chart-accessibility';
 
 // Mock DOM methods for testing
@@ -43,7 +47,7 @@ const mockElement: LiveRegionMockElement = {
   style: {},
   textContent: '',
   // document.body is mocked above; cast to HTMLElement for typing only
-  parentNode: (document.body as unknown as HTMLElement),
+  parentNode: document.body as unknown as HTMLElement,
 };
 
 jest.spyOn(document, 'createElement').mockReturnValue(mockElement as unknown as HTMLElement);
@@ -51,7 +55,7 @@ jest.spyOn(document, 'createElement').mockReturnValue(mockElement as unknown as 
 describe('useChartAccessibility', () => {
   const mockData: ChartAccessibilityData = {
     currentPrice: 0.314159,
-    targetPrice: 0.325000,
+    targetPrice: 0.325,
     trend: 'up',
     confidence: 75,
     timeFrame: '2 hours',
@@ -61,8 +65,8 @@ describe('useChartAccessibility', () => {
     priceChangePercent: 3.45,
     reasons: [
       'Recent price movement shows bullish momentum',
-      'Technical indicators suggest short-term uptrend'
-    ]
+      'Technical indicators suggest short-term uptrend',
+    ],
   };
 
   beforeEach(() => {
@@ -109,7 +113,7 @@ describe('useChartAccessibility', () => {
 
     const dataPoints = [
       { timestamp: 1000, price: 0.31, type: 'historical' as const },
-      { timestamp: 2000, price: 0.32, type: 'prediction' as const }
+      { timestamp: 2000, price: 0.32, type: 'prediction' as const },
     ];
 
     act(() => {
@@ -124,7 +128,7 @@ describe('useChartAccessibility', () => {
 
     const dataPoints = [
       { timestamp: 1000, price: 0.31, type: 'historical' as const },
-      { timestamp: 2000, price: 0.32, type: 'prediction' as const }
+      { timestamp: 2000, price: 0.32, type: 'prediction' as const },
     ];
 
     act(() => {
@@ -132,7 +136,7 @@ describe('useChartAccessibility', () => {
     });
 
     const rightArrowEvent = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-    
+
     act(() => {
       const handled = result.current.handleKeyDown(rightArrowEvent);
       expect(handled).toBe(true);
@@ -196,11 +200,11 @@ describe('useChartAccessibility', () => {
     const { result } = renderHook(() => useChartAccessibility());
 
     // Minimal context typed via unknown cast to avoid `any`
-    const mockCtx = ({
+    const mockCtx = {
       lineWidth: 1,
       shadowColor: 'rgba(0,0,0,0.5)',
       shadowBlur: 5,
-    } as unknown) as CanvasRenderingContext2D;
+    } as unknown as CanvasRenderingContext2D;
 
     act(() => {
       result.current.applyHighContrastStyles(mockCtx);
@@ -226,14 +230,14 @@ describe('useChartAccessibility', () => {
   });
 
   it('should handle accessibility options', () => {
-    const { result } = renderHook(() => 
+    const { result } = renderHook(() =>
       useChartAccessibility({
         accessibilityOptions: {
           includeDataPoints: false,
           includeAnalysis: false,
           verboseDescription: true,
-          includeNavigation: false
-        }
+          includeNavigation: false,
+        },
       })
     );
 
@@ -248,20 +252,18 @@ describe('useChartAccessibility', () => {
   });
 
   it('should disable features when options are false', () => {
-    const { result } = renderHook(() => 
+    const { result } = renderHook(() =>
       useChartAccessibility({
         enableKeyboardNavigation: false,
         enableLiveRegions: false,
-        enableHighContrastDetection: false
+        enableHighContrastDetection: false,
       })
     );
 
     // Keyboard navigation should be disabled
     expect(result.current.keyboardNavigator).toBeNull();
 
-    const dataPoints = [
-      { timestamp: 1000, price: 0.31, type: 'historical' as const }
-    ];
+    const dataPoints = [{ timestamp: 1000, price: 0.31, type: 'historical' as const }];
 
     act(() => {
       result.current.setupKeyboardNavigation(dataPoints);
@@ -286,15 +288,16 @@ describe('useScreenReaderDescription', () => {
 
 describe('useFocusIndicator', () => {
   it('should manage focus state for canvas element', () => {
-    const mockCanvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas') as HTMLCanvasElement;
+    const mockCanvas = document.createElementNS(
+      'http://www.w3.org/1999/xhtml',
+      'canvas'
+    ) as HTMLCanvasElement;
     const addSpy = jest.spyOn(mockCanvas, 'addEventListener');
     jest.spyOn(mockCanvas, 'removeEventListener');
 
     const canvasRef = { current: mockCanvas } as React.RefObject<HTMLCanvasElement>;
 
-    const { result } = renderHook(() => 
-      useFocusIndicator(canvasRef, false)
-    );
+    const { result } = renderHook(() => useFocusIndicator(canvasRef, false));
 
     expect(addSpy).toHaveBeenCalledWith('focus', expect.any(Function));
     expect(addSpy).toHaveBeenCalledWith('blur', expect.any(Function));
@@ -302,7 +305,10 @@ describe('useFocusIndicator', () => {
   });
 
   it('should apply high contrast focus styles', () => {
-    const mockCanvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas') as HTMLCanvasElement;
+    const mockCanvas = document.createElementNS(
+      'http://www.w3.org/1999/xhtml',
+      'canvas'
+    ) as HTMLCanvasElement;
     const addSpy = jest.spyOn(mockCanvas, 'addEventListener');
     jest.spyOn(mockCanvas, 'removeEventListener');
 

@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { logger } from '@/lib/logger';
 import { formatCompactNumber } from '@/lib/format-helpers';
 import { NETWORK_STATS_POLL_INTERVAL_MS } from '@/lib/constants';
-// Removed lucide-react import
+import { RefreshCw, Users, Globe, Zap } from '@/components/ui/icons';
 
 interface NetworkStatsData {
   activeUsers: number;
@@ -61,14 +61,14 @@ export default function NetworkStats() {
       <CardContent>
         {loading || !stats ? (
           <div className="flex h-[200px] items-center justify-center">
-            <span className="animate-spin text-4xl">🔄</span>
+            <RefreshCw className="size-8 animate-spin" aria-hidden="true" />
           </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">👥</span>
+                  <Users className="size-4 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm font-medium">Active Users</span>
                 </div>
                 <span className="text-2xl font-bold">{formatCompactNumber(stats.activeUsers)}</span>
@@ -76,7 +76,7 @@ export default function NetworkStats() {
 
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">🌐</span>
+                  <Globe className="size-4 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm font-medium">Total Nodes</span>
                 </div>
                 <span className="text-2xl font-bold">{formatCompactNumber(stats.totalNodes)}</span>
@@ -94,7 +94,7 @@ export default function NetworkStats() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <span className="text-xs text-muted-foreground">⚡</span>
+                  <Zap className="size-3 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm">TPS</span>
                 </div>
                 <span className="text-sm font-medium">{stats.transactionsPerSecond}</span>

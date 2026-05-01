@@ -3,13 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import {
-//   TrendingUp,
-//   TrendingDown,
-//   Minus,
-//   RefreshCw,
-//   AlertCircle,
-// } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, RefreshCw, AlertTriangle } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice, fetchPiHistoricalData, fallbackPrices } from '@/lib/api-client';
@@ -914,7 +908,7 @@ export default function PricePrediction() {
 
           {loading ? (
             <div className="flex h-[300px] items-center justify-center">
-              <span className="animate-spin text-4xl">🔄</span>
+              <RefreshCw className="size-8 animate-spin" aria-hidden="true" />
             </div>
           ) : prediction ? (
             <>
@@ -940,7 +934,7 @@ export default function PricePrediction() {
                   <div className="absolute right-2 top-2 rounded bg-background/80 px-2 py-1 text-xs text-muted-foreground">
                     Render: {performanceMetrics[performanceMetrics.length - 1]?.renderTime.toFixed(1)}ms
                     {performanceMetrics[performanceMetrics.length - 1]?.renderTime > 500 && (
-                      <span className="ml-1 text-red-500">⚠️</span>
+                      <AlertTriangle className="ml-1 size-3 text-red-500" aria-hidden="true" />
                     )}
                   </div>
                 )}
@@ -987,17 +981,17 @@ export default function PricePrediction() {
                   <div className="flex items-center gap-1">
                     {prediction.trend === 'up' ? (
                       <>
-                        <span className="text-green-500">📈</span>
+                        <TrendingUp className="size-4 text-green-500" aria-hidden="true" />
                         <span className="text-green-500">Bullish</span>
                       </>
                     ) : prediction.trend === 'down' ? (
                       <>
-                        <span className="text-red-500">📉</span>
+                        <TrendingDown className="size-4 text-red-500" aria-hidden="true" />
                         <span className="text-red-500">Bearish</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-blue-500">➖</span>
+                        <Minus className="size-4 text-blue-500" aria-hidden="true" />
                         <span className="text-blue-500">Stable</span>
                       </>
                     )}
@@ -1024,7 +1018,7 @@ export default function PricePrediction() {
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-amber-500">
-              <span>⚠️</span>
+              <AlertTriangle className="size-4" aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}

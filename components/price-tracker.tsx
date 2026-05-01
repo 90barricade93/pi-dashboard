@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 import { useCurrency, type Currency } from '@/contexts/currency-context';
 import { fetchPiPrice } from '@/lib/api-client';
@@ -106,7 +106,7 @@ export default function PriceTracker() {
         <div className="flex flex-col items-center justify-center p-4">
           {loading ? (
             <div className="flex h-24 items-center justify-center">
-              <span className="animate-spin text-2xl">🔄</span>
+              <RefreshCw className="size-6 animate-spin" aria-hidden="true" />
             </div>
           ) : (
             <>
@@ -127,9 +127,9 @@ export default function PriceTracker() {
                   )}
                 >
                   {priceChange > 0 ? (
-                    <span>↗️</span>
+                    <ArrowUpRight className="size-4" aria-hidden="true" />
                   ) : priceChange < 0 ? (
-                    <span>↘️</span>
+                    <ArrowDownRight className="size-4" aria-hidden="true" />
                   ) : null}
                   <span>
                     {priceChange > 0 ? '+' : ''}
@@ -144,7 +144,7 @@ export default function PriceTracker() {
 
               {error && (
                 <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
-                  <span>⚠️</span>
+                  <AlertTriangle className="size-3" aria-hidden="true" />
                   <span>{error}</span>
                 </div>
               )}

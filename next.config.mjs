@@ -8,9 +8,6 @@ try {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -18,11 +15,7 @@ const nextConfig = {
     domains: [],
     unoptimized: false,
   },
-  experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
-  },
+  reactCompiler: true,
   async headers() {
     return [
       {

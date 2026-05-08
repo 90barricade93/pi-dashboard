@@ -49,7 +49,7 @@ pi-dashboard/
 
 | Path | File | Purpose |
 |---|---|---|
-| `/` | `app/page.tsx` | Main dashboard — `PriceTracker`, `NetworkStats`, `PricePrediction`, `NewsFeed`, `PiCalculator` |
+| / | `app/page.tsx` | Main dashboard — `CurrencyProvider`, `PriceTracker`, `NetworkStats`, `PricePrediction`, `NewsFeed`, `PiCalculator` |
 | (root) | `app/layout.tsx` | Root layout — `ThemeProvider`, `Header`, `Footer`, `MobileNav`, `CurrencyProvider` |
 
 ### API (`app/api/`)
